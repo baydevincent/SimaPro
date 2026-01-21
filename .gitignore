@@ -4,6 +4,7 @@
 /storage/*.key
 /vendor
 .env
+.qwen
 .phpunit.result.cache
 Homestead.json
 Homestead.yaml
@@ -23,5 +24,3 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
-
- *.log
