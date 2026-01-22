@@ -59,9 +59,9 @@
         </li>
         @endif
 
-        <li class="nav-item {{ Nav::isRoute('profile') }}">
-            <a class="nav-link" href="{{ route('profile') }}">
-                <i class="fas fa-fw fa-calendar"></i>
+        <li class="nav-item {{ Nav::isRoute('calendar.index') }}">
+            <a class="nav-link" href="{{ route('calendar.index') }}">
+                <i class="fas fa-fw fa-calendar-alt"></i>
                 <span>{{ __('Kalender') }}</span>
             </a>
         </li>
@@ -110,13 +110,6 @@
                                 <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
                                 {{ __('Profile') }}
                             </a>
-                            <a class="dropdown-item" href="javascript:void(0)">
-                                <i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>
-                                {{ __('Settings') }}
-                            </a>
-                            <a class="dropdown-item" href="javascript:void(0)">
-                                <i class="fas fa-list fa-sm fa-fw mr-2 text-gray-400"></i>
-                                {{ __('Activity Log') }}
                             </a>
                             <div class="dropdown-divider"></div>
                             <a class="dropdown-item" href="#" data-toggle="modal" data-target="#logoutModal">

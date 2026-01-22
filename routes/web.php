@@ -9,6 +9,7 @@ use App\Http\Controllers\TaskController;
 use App\Http\Controllers\WorkerAttendanceController;
 use App\Http\Controllers\WorkerController;
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\UserController;
 /*
 |--------------------------------------------------------------------------
@@ -85,6 +86,7 @@ Route::get('/project/{project}/attendance/date-data', [AttendanceController::cla
 Route::get('/project/{project}/attendance/dates', [AttendanceController::class, 'getAttendanceDates'])->name('attendance.dates.list');
 
 // Kalender
+Route::get('/calendar', [CalendarController::class, 'index'])->name('calendar.index');
 Route::get('/project/{project}/gantt', function ($projectId) {
     $project = \App\Models\Project::findOrFail($projectId);
     return view('projectntask.gantt', compact('project'));

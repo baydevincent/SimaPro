@@ -173,13 +173,15 @@
              role="tabpanel">
 
             <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="font-weight-bold mb-3">
+                        List Pekerja
+                    </h6>
+                    <button class="btn btn-primary" data-toggle="modal" data-target="#modalCreateWorker">
+                        + Tambah Worker
+                    </button>
+                </div>
 
-                <h6 class="font-weight-bold mb-3">
-                    List Pekerja
-                </h6>
-                <button class="btn btn-sm btn-primary" data-toggle="modal" data-target="#modalCreateWorker">
-                    + Tambah Worker
-                </button>
                 <table class="table table-bordered mt-3">
                     <tr>
                         <th>Nama</th>
@@ -267,13 +269,13 @@
                             <td>{{ $tidakHadirCount }}</td>
                             <td>
                                 <a href="{{ route('attendance.show', ['project' => $project->id, 'attendance' => $attendance->id]) }}"
-                                   class="btn btn-info btn-sm">Lihat Detail</a>
+                                   class="btn btn-info btn-sm"><i class="fas fa-eye"></i></a>
                                 <a href="{{ route('attendance.edit', ['project' => $project->id, 'attendance' => $attendance->id]) }}"
-                                   class="btn btn-warning btn-sm">Edit</a>
+                                   class="btn btn-warning btn-sm"><i class="fas fa-edit"></i></a>
                                 <button class="btn btn-danger btn-sm btn-delete-attendance"
-                                        data-id="{{ $attendance->id }}"
-                                        data-url="{{ route('attendance.destroy', ['project' => $project->id, 'attendance' => $attendance->id]) }}">
-                                    Hapus
+                                    data-id="{{ $attendance->id }}"
+                                    data-url="{{ route('attendance.destroy', ['project' => $project->id, 'attendance' => $attendance->id]) }}">
+                                    <i class="fas fa-trash"></i>
                                 </button>
                             </td>
                         </tr>

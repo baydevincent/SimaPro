@@ -2,10 +2,10 @@
 
 @section('main-content')
 <div class="container-fluid">
-    <div class="d-sm-flex align-items-center justify-content-between mb-4">
-        <h1 class="h3 mb-0 text-gray-800">Manage Users</h1>
-        <a href="{{ route('users.create') }}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
-            <i class="fas fa-plus fa-sm text-white-50"></i> Create New User
+    <div class="d-flex flex-column flex-md-row align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800 mb-2 mb-md-0">Manage Users</h1>
+        <a href="{{ route('users.create') }}" class="btn btn-sm btn-primary shadow-sm">
+            <i class="fas fa-plus fa-sm text-white-50"></i> Buat User
         </a>
     </div>
 
@@ -44,7 +44,7 @@
                                         <!-- <a class="btn btn-primary btn-sm" href="{{ route('users.assign-role-form', $user->id) }}" title="Assign Role">
                                             <i class="fas fa-user-tag"></i>
                                         </a> -->
-                                        <a class="btn btn-warning btn-sm" href="{{ route('users.edit', $user->id) }}" title="Edit">
+                                        <a class="btn btn-warning btn-sm mb-1 mb-md-0" href="{{ route('users.edit', $user->id) }}" title="Edit">
                                             <i class="fas fa-edit"></i>
                                         </a>
 

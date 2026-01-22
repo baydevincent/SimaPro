@@ -44,7 +44,7 @@
                 <td>
                     @if($p->id)
                         <a href="{{ route('project.show',['project' => $p->id]) }}" class="btn btn-info btn-sm">
-                            Detail
+                            <i class="fas fa-eye"></i>
                         </a>
                     @else
                         <span class="btn btn-info btn-sm disabled">Detail</span>
