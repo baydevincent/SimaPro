@@ -9,11 +9,21 @@
         <h6 class="font-weight-bold mb-0">
             Detail Project : {{ $project->nama_project }}
         </h6>
+        <a href="{{ route('project') }}" class="btn btn-sm btn-secondary">Kembali</a>
     </div>
 
     <ul class="nav nav-tabs" id="projectTab" role="tablist">
         <li class="nav-item">
             <a class="nav-link active"
+               id="shopdrawing-tab"
+               data-toggle="tab"
+               href="#shopdrawing"
+               role="tab">
+                Shop Drawing
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link"
                id="tasks-tab"
                data-toggle="tab"
                href="#tasks"
@@ -39,57 +49,72 @@
                 Absensi Project
             </a>
         </li>
+        <li class="nav-item">
+            <a class="nav-link"
+               id="report-tab"
+               data-toggle="tab"
+               href="#report"
+               role="tab">
+                Laporan Harian
+            </a>
+        </li>
     </ul>
 
     <div class="tab-content">
 
-        <!-- TAB 1 : TASK PROJECT -->
-
+        <!-- TAB 1 : SHOP DRAWING -->
         <div class="tab-pane fade show active"
+             id="shopdrawing"
+             role="tabpanel">
+            @include('shopdrawing.index')
+        </div>
+
+        <!-- TAB 2 : TASK PROJECT -->
+        <div class="tab-pane fade"
              id="tasks"
              role="tabpanel">
 
-        <div class="card-header">
-            <form id="formCreateTask"
-                data-action="{{ route('task.store',$project->id) }}">
-                @csrf
+            <div class="card-header">
+                <form id="formCreateTask"
+                    data-action="{{ route('task.store',$project->id) }}">
+                    @csrf
 
-                <div class="row align-items-center">
-                    <div class="col-md-5">
-                        <input name="nama_task"
-                            class="form-control"
-                            placeholder="Nama Task">
-                        <div class="invalid-feedback"></div>
-                    </div>
-
-                    @auth
-                        @if(Auth::user()->hasRole('administrator'))
-                        <div class="col-md-4">
-                            <input name="bobot_rupiah"
+                    <div class="row align-items-center">
+                        <div class="col-md-5">
+                            <input name="nama_task"
                                 class="form-control"
-                                placeholder="Bobot Rupiah">
+                                placeholder="Nama Task">
                             <div class="invalid-feedback"></div>
                         </div>
+
+                        @auth
+                            @if(Auth::user()->hasRole('administrator'))
+                            <div class="col-md-4">
+                                <input name="bobot_rupiah"
+                                    class="form-control"
+                                    placeholder="Bobot Rupiah">
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            @else
+                            <div class="col-md-4">
+                                <input type="hidden" name="bobot_rupiah" value="0">
+                            </div>
+                            @endif
                         @else
                         <div class="col-md-4">
                             <input type="hidden" name="bobot_rupiah" value="0">
                         </div>
-                        @endif
-                    @else
-                    <div class="col-md-4">
-                        <input type="hidden" name="bobot_rupiah" value="0">
-                    </div>
-                    @endauth
+                        @endauth
 
-                    <div class="col-md-3">
-                        <button type="submit"
-                                class="btn btn-primary w-100">
-                            Tambah
-                        </button>
+                        <div class="col-md-3">
+                            <button type="submit"
+                                    class="btn btn-primary w-100">
+                                Tambah
+                            </button>
+                        </div>
                     </div>
-                </div>
-            </form>
-        </div>
+                </form>
+            </div>
 
             {{-- LIST TASK --}}
             <div class="card-body">
@@ -139,13 +164,9 @@
                                 </form>
                             </td>
                             <td>
-                                <button
-                                    class="btn btn-warning btn-sm btn-delete-task"
-                                    data-id="{{ $task->id }}"
-                                    data-url="{{ route('task.destroy', $task->id) }}"
-                                >
+                                <a href="{{ route('task.edit', $task->id) }}" class="btn btn-warning btn-sm">
                                     <i class="fas fa-edit"></i>
-                                </button>
+                                </a>
                                 <button
                                     class="btn btn-danger btn-sm btn-delete-task"
                                     data-id="{{ $task->id }}"
@@ -157,7 +178,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="3" class="text-center text-muted">
+                            <td colspan="4" class="text-center text-muted">
                                 Belum ada task
                             </td>
                         </tr>
@@ -190,7 +211,7 @@
                         <th>Aksi</th>
                     </tr>
 
-                    @foreach($project->workers as $worker)
+                    @forelse($project->workers as $worker)
                     <tr>
                         <td>{{ $worker->nama_worker }}</td>
                         <td>{{ $worker->jabatan }}</td>
@@ -210,7 +231,13 @@
                             </button>
                         </td>
                     </tr>
-                    @endforeach
+                    @empty
+                    <tr>
+                        <td colspan="4" class="text-center text-muted">
+                            Belum ada pekerja
+                        </td>
+                    </tr>
+                    @endforelse
                 </table>
             </div>
             @include('worker.create')
@@ -244,50 +271,55 @@
                     </div>
                 @endif
 
-        <div class="table-responsive">
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th>Tanggal</th>
-                        <th>Total Pekerja</th>
-                        <th>Hadir</th>
-                        <th>Tidak Hadir</th>
-                        <th>Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($project->attendances as $attendance)
-                        @php
-                            $totalWorkers = $attendance->attendanceWorkers->count();
-                            $hadirCount = $attendance->attendanceWorkers->where('hadir', true)->count();
-                            $tidakHadirCount = $totalWorkers - $hadirCount;
-                        @endphp
-                        <tr>
-                            <td>{{ \Carbon\Carbon::parse($attendance->tanggal)->format('d M Y') }}</td>
-                            <td>{{ $totalWorkers }}</td>
-                            <td>{{ $hadirCount }}</td>
-                            <td>{{ $tidakHadirCount }}</td>
-                            <td>
-                                <a href="{{ route('attendance.show', ['project' => $project->id, 'attendance' => $attendance->id]) }}"
-                                   class="btn btn-info btn-sm"><i class="fas fa-eye"></i></a>
-                                <a href="{{ route('attendance.edit', ['project' => $project->id, 'attendance' => $attendance->id]) }}"
-                                   class="btn btn-warning btn-sm"><i class="fas fa-edit"></i></a>
-                                <button class="btn btn-danger btn-sm btn-delete-attendance"
-                                    data-id="{{ $attendance->id }}"
-                                    data-url="{{ route('attendance.destroy', ['project' => $project->id, 'attendance' => $attendance->id]) }}">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="5" class="text-center">Belum ada data absensi</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Tanggal</th>
+                                <th>Total Pekerja</th>
+                                <th>Hadir</th>
+                                <th>Tidak Hadir</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($project->attendances as $attendance)
+                                @php
+                                    $totalWorkers = $attendance->attendanceWorkers->count();
+                                    $hadirCount = $attendance->attendanceWorkers->where('hadir', true)->count();
+                                    $tidakHadirCount = $totalWorkers - $hadirCount;
+                                @endphp
+                                <tr>
+                                    <td>{{ \Carbon\Carbon::parse($attendance->tanggal)->format('d M Y') }}</td>
+                                    <td>{{ $totalWorkers }}</td>
+                                    <td>{{ $hadirCount }}</td>
+                                    <td>{{ $tidakHadirCount }}</td>
+                                    <td>
+                                        <a href="{{ route('attendance.show', ['project' => $project->id, 'attendance' => $attendance->id]) }}"
+                                        class="btn btn-info btn-sm"><i class="fas fa-eye"></i></a>
+                                        <a href="{{ route('attendance.edit', ['project' => $project->id, 'attendance' => $attendance->id]) }}"
+                                        class="btn btn-warning btn-sm"><i class="fas fa-edit"></i></a>
+                                        <button class="btn btn-danger btn-sm btn-delete-attendance"
+                                            data-id="{{ $attendance->id }}"
+                                            data-url="{{ route('attendance.destroy', ['project' => $project->id, 'attendance' => $attendance->id]) }}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="text-center">Belum ada data absensi</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
             </div>
+        </div>
+
+        <div class="tab-pane fade"
+             id="report"
+             role="tabpanel">
         </div>
 
     </div>

@@ -11,7 +11,7 @@
             @endif
         </h6>
         @if(isset($project) && $project->id)
-            <a href="{{ route('project.show', ['project' => $project->id]) }}" class="btn btn-sm btn-secondary">Kembali</a>
+            <a href="{{ route('project.show', ['project' => $attendanceModel->project->id]) }}" class="btn btn-sm btn-secondary">Kembali</a>
         @else
             <a href="{{ route('project') }}" class="btn btn-sm btn-secondary">Kembali</a>
         @endif

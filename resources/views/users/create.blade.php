@@ -2,10 +2,6 @@
 
 @section('main-content')
 <div class="container-fluid">
-    <div class="d-sm-flex align-items-center justify-content-between mb-4">
-        <h1 class="h3 mb-0 text-gray-800">Create New User</h1>
-    </div>
-
     <div class="row justify-content-center">
         <div class="col-xl-8 col-lg-8 col-md-8">
             <div class="card o-hidden border-0 shadow-lg my-5">
@@ -77,13 +73,14 @@
                                             <div class="text-danger">{{ $message }}</div>
                                         @enderror
                                     </div>
-                                    <button type="submit" class="btn btn-primary btn-user btn-block">
-                                        Create User
-                                    </button>
-                                    <hr>
-                                    <a href="{{ route('users.index') }}" class="btn btn-secondary btn-user btn-block">
-                                        Cancel
-                                    </a>
+                                    <div class="row">
+                                        <button type="submit" class="btn btn-primary btn-user">
+                                            Create
+                                        </button>
+                                        <a href="{{ route('users.index') }}" class="btn btn-secondary btn-user">
+                                            Cancel
+                                        </a>
+                                    </div>
                                 </form>
                             </div>
                         </div>

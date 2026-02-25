@@ -11,6 +11,7 @@ use App\Http\Controllers\WorkerController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\ShopDrawingController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -33,57 +34,35 @@ Route::get('/home', 'HomeController@index')->name('home');
 Route::get('/profile', 'ProfileController@index')->name('profile');
 Route::put('/profile', 'ProfileController@update')->name('profile.update');
 
-Route::get('/about', function () {
-    return view('about');
-})->name('about');
-
 // Project
-Route::resource('project', ProjectController::class)->only(['create','store','show', 'destroy']);
+Route::resource('project', ProjectController::class)->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy']);
 
-Route::get('/project', [ProjectController::class, 'index'])
-    ->name('project');
+Route::get('/project', [ProjectController::class, 'index'])->name('project');
 
-Route::resource('task', TaskController::class)->only(['destroy', 'update']);
+Route::resource('task', TaskController::class)->only(['destroy', 'update', 'edit']);
 Route::post('project/{project}/task', [TaskController::class, 'store'])->name('task.store');
 Route::patch('task/{task}/toggle', [TaskController::class, 'toggle'])->name('task.toggle');
 
 // Worker
 Route::resource('worker', ProjectWorkerController::class)->only(['show', 'destroy', 'edit']);
 
-Route::post(
-    '/project/{project}/workers',
-    [ProjectWorkerController::class, 'store']
-)->name('project.workers.store');
+Route::post('/project/{project}/workers',[ProjectWorkerController::class, 'store'])->name('project.workers.store');
+Route::get('/project/{project}/absensi',[WorkerAttendanceController::class, 'index'])->name('absensi.index');
+Route::get('/project/{project}/workers', [ProjectWorkerController::class, 'index'])->name('project.workers');
+Route::post('/project/{project}/workers', [ProjectWorkerController::class, 'store'])->name('project.workers.store');
+Route::delete('/project/{project}/workers/{worker}', [ProjectWorkerController::class, 'destroy'])->name('project.workers.destroy');
+Route::post('/absensi/toggle',[WorkerAttendanceController::class, 'toggle'])->name('absensi.toggle');
 
-
-// Absensi
-Route::get('/project/{project}/absensi',
-    [WorkerAttendanceController::class, 'index']
-)->name('absensi.index');
-
-Route::get('/project/{project}/workers', [ProjectWorkerController::class, 'index'])
-    ->name('project.workers');
-
-Route::post('/project/{project}/workers', [ProjectWorkerController::class, 'store'])
-    ->name('project.workers.store');
-
-Route::delete('/project/{project}/workers/{worker}', [ProjectWorkerController::class, 'destroy'])
-    ->name('project.workers.destroy');
-
-Route::post('/absensi/toggle',
-    [WorkerAttendanceController::class, 'toggle']
-)->name('absensi.toggle');
-
-// Attendance CRUD
-Route::get('/project/{project}/attendance', [AttendanceController::class, 'index'])->name('attendance.index');
+// Absen CRUD
+Route::get('/project/{project}/absensi', [AttendanceController::class, 'index'])->name('attendance.index');
 Route::get('/project/{project}/absensi/create', [AttendanceController::class, 'create'])->name('attendance.create');
-Route::post('/project/{project}/attendance', [AttendanceController::class, 'store'])->name('attendance.store');
-Route::get('/project/{project}/attendance/{attendance}', [AttendanceController::class, 'show'])->name('attendance.show');
-Route::get('/project/{project}/attendance/{attendance}/edit', [AttendanceController::class, 'edit'])->name('attendance.edit');
-Route::put('/project/{project}/attendance/{attendance}', [AttendanceController::class, 'update'])->name('attendance.update');
-Route::delete('/project/{project}/attendance/{attendance}', [AttendanceController::class, 'destroy'])->name('attendance.destroy');
-Route::get('/project/{project}/attendance/date-data', [AttendanceController::class, 'getAttendanceForDate'])->name('attendance.date.data');
-Route::get('/project/{project}/attendance/dates', [AttendanceController::class, 'getAttendanceDates'])->name('attendance.dates.list');
+Route::post('/project/{project}/absensi', [AttendanceController::class, 'store'])->name('attendance.store');
+Route::get('/project/{project}/absensi/{attendance}', [AttendanceController::class, 'show'])->name('attendance.show');
+Route::get('/project/{project}/absensi/{attendance}/edit', [AttendanceController::class, 'edit'])->name('attendance.edit');
+Route::put('/project/{project}/absensi/{attendance}', [AttendanceController::class, 'update'])->name('attendance.update');
+Route::delete('/project/{project}/absensi/{attendance}', [AttendanceController::class, 'destroy'])->name('attendance.destroy');
+Route::get('/project/{project}/absensi/date-data', [AttendanceController::class, 'getAttendanceForDate'])->name('attendance.date.data');
+Route::get('/project/{project}/absensi/dates', [AttendanceController::class, 'getAttendanceDates'])->name('attendance.dates.list');
 
 // Kalender
 Route::get('/calendar', [CalendarController::class, 'index'])->name('calendar.index');
@@ -92,7 +71,13 @@ Route::get('/project/{project}/gantt', function ($projectId) {
     return view('projectntask.gantt', compact('project'));
 })->name('project.gantt');
 
-// User Management - Protected with role middleware
+// Shop Drawing
+Route::get('/project/{project}/shopdrawing', [ShopDrawingController::class, 'index'])->name('shopdrawing.index');
+Route::post('/project/{project}/shopdrawing', [ShopDrawingController::class, 'store'])->name('shopdrawing.store');
+Route::get('/project/{project}/shopdrawing/{shopDrawing}/download', [ShopDrawingController::class, 'download'])->name('shopdrawing.download');
+Route::delete('/project/{project}/shopdrawing/{shopDrawing}', [ShopDrawingController::class, 'destroy'])->name('shopdrawing.destroy');
+
+// User Management
 Route::group(['middleware' => ['auth', 'role:administrator']], function () {
     Route::resource('users', UserController::class)->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
     Route::get('/users/{id}/assign-role', [UserController::class, 'showAssignRoleForm'])->name('users.assign-role-form');

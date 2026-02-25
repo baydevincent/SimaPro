@@ -44,6 +44,45 @@ $('#formCreateProject').on('submit', function(e){
     });
 });
 
+$('#formCreateProject').on('submit', function(e){
+    e.preventDefault();
+
+    $('#errorBox').addClass('d-none').html('');
+    $('.form-control').removeClass('is-invalid');
+    $('.invalid-feedback').html('');
+
+    $.ajax({
+        url: "{{ route('project.store') }}",
+        method: "POST",
+        data: $(this).serialize(),
+        success: function(res){
+            $('#modalCreateProject').modal('hide');
+            alert(res.message);
+            location.reload();
+        },
+        error: function(xhr){
+            if (xhr.status === 422) {
+                let errors = xhr.responseJSON.errors;
+                let list = '<ul>';
+
+                $.each(errors, function(field, messages){
+                    list += `<li>${messages[0]}</li>`;
+
+                    let input = $(`[name="${field}"]`);
+                    input.addClass('is-invalid');
+                    input.next('.invalid-feedback').html(messages[0]);
+                });
+
+                list += '</ul>';
+
+                $('#errorBox')
+                    .removeClass('d-none')
+                    .html(list);
+            }
+        }
+    });
+});
+
 $(document).off('submit', '#formCreateTask');
 $(document).on('submit', '#formCreateTask', function (e) {
     e.preventDefault();
@@ -63,7 +102,7 @@ $(document).on('submit', '#formCreateTask', function (e) {
         success: function (res) {
             alert(res.message);
             form[0].reset();
-            location.reload();        
+            location.reload();
         },
 
         error: function (xhr) {

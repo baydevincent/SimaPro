@@ -16,7 +16,21 @@
     <link href="{{ asset('css/sb-admin-2.min.css') }}" rel="stylesheet">
 
     <link href="{{ asset('img/favicon.png') }}" rel="icon" type="image/png">
+    
+    <style>
+        @media (max-width: 768px) {
+            #accordionSidebar {
+                z-index: 9999 !important;
+            }
+            
+            /* Pastikan elemen lain tidak menutupi sidebar */
+            .fc, .fullcalendar {
+                z-index: 1 !important;
+            }
+        }
+    </style>
 </head>
+@stack('style')
 <body id="page-top">
 
 <div id="wrapper">
@@ -174,7 +188,9 @@
 <script src="{{ asset('vendor/jquery-easing/jquery.easing.min.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="{{ asset('js/sb-admin-2.min.js') }}"></script>
-@include('script') 
+
+
+@include('script')
 
 </body>
 </html>

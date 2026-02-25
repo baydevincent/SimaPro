@@ -26,7 +26,6 @@ class AttendanceController extends Controller
 
         $projectWorkers = ProjectWorker::where('project_id', $project->id)->get();
 
-        // Dapatkan data kehadiran yang sudah ada untuk tanggal ini
         $existingAttendance = [];
         $attendance = Attendance::where('project_id', $project->id)
             ->where('tanggal', $tanggal)
@@ -47,7 +46,6 @@ class AttendanceController extends Controller
                 'kehadiran' => 'array'
             ]);
 
-            // Cek apakah sudah ada absensi untuk tanggal ini
             $attendance = Attendance::updateOrCreate(
                 [
                     'project_id' => $project->id,
@@ -55,10 +53,8 @@ class AttendanceController extends Controller
                 ]
             );
 
-            // Ambil semua pekerja dalam proyek ini
             $projectWorkers = $project->workers;
 
-            // Simpan data kehadiran untuk setiap pekerja
             foreach ($projectWorkers as $pw) {
                 $kehadiranData = $request->input('kehadiran.' . $pw->id, []);
 
@@ -68,13 +64,12 @@ class AttendanceController extends Controller
                         'project_worker_id' => $pw->id
                     ],
                     [
-                        'hadir' => !empty($kehadiranData['hadir']), // true jika checkbox dicentang, false jika tidak
+                        'hadir' => !empty($kehadiranData['hadir']),
                         'keterangan' => $kehadiranData['keterangan'] ?? null
                     ]
                 );
             }
 
-            // Check if request is AJAX by checking for X-Requested-With header or wantsJson
             if ($request->ajax() || $request->wantsJson() || $request->header('X-Requested-With')) {
                 return response()->json([
                     'success' => true,
@@ -84,7 +79,6 @@ class AttendanceController extends Controller
 
             return redirect()->route('attendance.index', $project)->with('success', 'Absensi berhasil disimpan.');
         } catch (\Exception $e) {
-            // If it's an AJAX request, return JSON error
             if ($request->ajax() || $request->wantsJson() || $request->header('X-Requested-With')) {
                 return response()->json([
                     'success' => false,
@@ -92,14 +86,12 @@ class AttendanceController extends Controller
                 ], 500);
             }
 
-            // For non-AJAX requests, redirect back with error
             return redirect()->back()->withErrors(['error' => 'Terjadi kesalahan saat menyimpan absensi.']);
         }
     }
 
     public function show($project, $attendance)
     {
-        // Ambil attendance berdasarkan ID dan pastikan terkait dengan project yang benar
         $attendanceModel = Attendance::where('id', $attendance)
             ->where('project_id', $project)
             ->with(['attendanceWorkers.projectWorker', 'project'])
@@ -129,21 +121,18 @@ class AttendanceController extends Controller
             'kehadiran' => 'array'
         ]);
 
-        // Ambil semua pekerja dalam proyek ini
         $projectWorkers = $attendanceModel->project->workers;
 
-        // Update data kehadiran untuk setiap pekerja
         foreach ($projectWorkers as $pw) {
             $kehadiranData = $request->input('kehadiran.' . $pw->id, []);
 
-            // Update atau buat data kehadiran untuk setiap pekerja
             AttendanceWorker::updateOrCreate(
                 [
                     'attendance_id' => $attendanceModel->id,
                     'project_worker_id' => $pw->id
                 ],
                 [
-                    'hadir' => !empty($kehadiranData['hadir']), // true jika checkbox dicentang, false jika tidak
+                    'hadir' => !empty($kehadiranData['hadir']), 
                     'keterangan' => $kehadiranData['keterangan'] ?? null
                 ]
             );

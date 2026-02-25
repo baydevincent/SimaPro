@@ -33,6 +33,11 @@ class TaskController extends Controller
         ]);
     }
 
+    public function edit(Task $task)
+    {
+        return view('task.edit', compact('task'));
+    }
+
     public function update(Request $request, Task $task)
     {
         $validatedData = $request->validate([
@@ -51,10 +56,7 @@ class TaskController extends Controller
 
         $task->update($validatedData);
 
-        return response()->json([
-            'message' => 'Task berhasil diperbarui',
-            'data' => $task
-        ]);
+        return redirect()->route('project.show', $task->project->id)->with('success', 'Task berhasil diperbarui');
     }
 
     public function destroy(Task $task)

@@ -6,7 +6,7 @@
         <h6 class="font-weight-bold mb-0">
             Edit Absensi - {{ \Carbon\Carbon::parse($attendanceModel->tanggal)->format('d M Y') }}
         </h6>
-        <a href="{{ route('attendance.index', $attendanceModel->project->id) }}" class="btn btn-sm btn-secondary">Kembali</a>
+        <a href="{{ route('project.show', ['project' => $attendanceModel->project->id]) }}" class="btn btn-sm btn-secondary">Kembali</a>
     </div>
 
     <div class="card-body">

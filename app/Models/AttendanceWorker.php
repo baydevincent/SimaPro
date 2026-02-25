@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class AttendanceWorker extends Model
 {
+
+    public $timestamps = false;
     protected $fillable = [
         'attendance_id',
         'project_worker_id',
