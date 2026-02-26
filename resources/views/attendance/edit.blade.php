@@ -10,7 +10,7 @@
     </div>
 
     <div class="card-body">
-        <form action="{{ route('attendance.update', ['project' => $attendanceModel->project->id, 'attendance' => $attendanceModel->id]) }}" method="POST">
+        <form id="editAttendanceForm" action="{{ route('attendance.update', ['project' => $attendanceModel->project->id, 'attendance' => $attendanceModel->id]) }}" method="POST">
             @csrf
             @method('PUT')
             <div class="form-group">
@@ -33,9 +33,9 @@
                                 <td>{{ $aw->projectWorker->nama_worker }}</td>
                                 <td>
                                     <div class="form-check form-check-inline">
-                                        <input class="form-check-input hadir-check" 
-                                               type="checkbox" 
-                                               name="kehadiran[{{ $aw->id }}][hadir]" 
+                                        <input class="form-check-input hadir-check"
+                                               type="checkbox"
+                                               name="kehadiran[{{ $aw->id }}][hadir]"
                                                id="hadir_{{ $aw->id }}"
                                                value="1"
                                                {{ $aw->hadir ? 'checked' : '' }}>
@@ -43,8 +43,8 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <input type="text" 
-                                           name="kehadiran[{{ $aw->id }}][keterangan]" 
+                                    <input type="text"
+                                           name="kehadiran[{{ $aw->id }}][keterangan]"
                                            class="form-control"
                                            value="{{ $aw->keterangan }}"
                                            placeholder="Keterangan">
@@ -59,7 +59,7 @@
                 </table>
             </div>
 
-            <button type="submit" class="btn btn-primary">Update Absensi</button>
+            <button type="submit" id="btnUpdate" class="btn btn-primary">Update Absensi</button>
         </form>
     </div>
 </div>
@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 keteranganInput.disabled = false;
                 keteranganInput.placeholder = "Keterangan (opsional)";
             } else {
-                keteranganInput.disabled = false; // Tetap aktif agar bisa diisi keterangan ketidakhadiran
+                keteranganInput.disabled = false;
                 keteranganInput.placeholder = "Keterangan ketidakhadiran";
             }
         });
@@ -89,10 +89,64 @@ document.addEventListener('DOMContentLoaded', function() {
         if(!check.checked) {
             const row = check.closest('tr');
             const keteranganInput = row.querySelector('input[type="text"]');
-            keteranganInput.disabled = false; // Tetap aktif agar bisa diisi keterangan ketidakhadiran
+            keteranganInput.disabled = false;
             keteranganInput.placeholder = "Keterangan ketidakhadiran";
         }
     });
+
+    // Handle form submission with AJAX
+    const form = document.getElementById('editAttendanceForm');
+    const btnUpdate = document.getElementById('btnUpdate');
+
+    if(form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            // Show loading state
+            const originalText = btnUpdate.textContent;
+            btnUpdate.textContent = 'Menyimpan...';
+            btnUpdate.disabled = true;
+
+            // Prepare form data
+            const formData = new FormData(form);
+
+            // Send AJAX request
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            })
+            .then(response => {
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    return response.json();
+                } else {
+                    return response.text().then(text => {
+                        return { success: false, message: 'Server mengembalikan respon yang tidak valid.' };
+                    });
+                }
+            })
+            .then(data => {
+                if(data.success || data.message) {
+                    alert(data.message || 'Absensi berhasil diperbarui.');
+                    window.location.href = "{{ route('attendance.index', ['project' => $attendanceModel->project->id]) }}";
+                } else {
+                    alert('Error: ' + (data.message || 'Terjadi kesalahan saat memperbarui absensi.'));
+                    btnUpdate.textContent = originalText;
+                    btnUpdate.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Terjadi kesalahan saat memperbarui absensi. Silakan coba lagi.');
+                btnUpdate.textContent = originalText;
+                btnUpdate.disabled = false;
+            });
+        });
+    }
 });
 </script>
 @endpush

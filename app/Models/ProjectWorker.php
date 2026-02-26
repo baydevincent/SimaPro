@@ -9,7 +9,7 @@ class ProjectWorker extends Model
     protected $fillable = [
         'project_id',
         'nama_worker',
-        'jabatan',
+        'posisi',
         'no_hp',
         'aktif'
     ];

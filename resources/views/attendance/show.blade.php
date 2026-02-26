@@ -114,7 +114,7 @@
                                 <tr>
                                     <th>No</th>
                                     <th>Nama Pekerja</th>
-                                    <th>Jabatan</th>
+                                    <th>Posisi</th>
                                     <th>Status Kehadiran</th>
                                     <th>Keterangan</th>
                                 </tr>
@@ -124,7 +124,8 @@
                                     <tr>
                                         <td>{{ $index + 1 }}</td>
                                         <td>{{ $aw->projectWorker ? $aw->projectWorker->nama_worker : 'N/A' }}</td>
-                                        <td>{{ $aw->projectWorker ? $aw->projectWorker->jabatan : 'N/A' }}</td>
+                                        <td>{{ $aw->projectWorker ? $aw->projectWorker->posisi : 'N/A' }}</td>
+                                        <td>{{ $aw->projectWorker ? $aw->projectWorker->no_hp : 'N/A' }}</td>
                                         <td>
                                             <span class="badge {{ $aw->hadir ? 'badge-success' : 'badge-danger' }} px-3 py-2">
                                                 <i class="fas {{ $aw->hadir ? 'fa-check' : 'fa-times' }}"></i>

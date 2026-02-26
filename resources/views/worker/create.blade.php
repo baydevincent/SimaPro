@@ -21,14 +21,14 @@
                     </div>
 
                     <div class="form-group">
-                        <label>Jabatan</label>
-                        <input type="text" name="jabatan" class="form-control">
+                        <label>Posisi</label>
+                        <input type="text" name="posisi" class="form-control">
                         <div class="invalid-feedback"></div>
                     </div>
 
                     <div class="form-group">
                         <label>No Handphone</label>
-                        <input type="number" name="no_hp" class="form-control">
+                        <input type="text" name="no_hp" class="form-control">
                         <div class="invalid-feedback"></div>
                     </div>
 

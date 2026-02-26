@@ -22,12 +22,12 @@ class ProjectWorkerController extends Controller
     {
         $request->validate([
             'nama_worker' => 'required|string|max:255',
-            'jabatan'     => 'nullable|string|max:255',
+            'posisi'     => 'nullable|string|max:255',
         ]);
 
         $worker = $project->workers()->create([
             'nama_worker' => $request->nama_worker,
-            'jabatan'     => $request->jabatan,
+            'posisi'     => $request->posisi,
             'aktif'       => true,
         ]);
 
@@ -55,6 +55,45 @@ class ProjectWorkerController extends Controller
 
         return response()->json([
             'message' => 'Karyawan berhasil dihapus'
+        ]);
+    }
+
+    public function edit($project, $worker)
+    {
+        $workerModel = ProjectWorker::where('id', $worker)
+            ->where('project_id', $project)
+            ->firstOrFail();
+
+        return response()->json([
+            'success' => true,
+            'data' => $workerModel
+        ]);
+    }
+
+    public function update(Request $request, $project, $worker)
+    {
+        $workerModel = ProjectWorker::where('id', $worker)
+            ->where('project_id', $project)
+            ->firstOrFail();
+
+        $request->validate([
+            'nama_worker' => 'required|string|max:255',
+            'posisi'      => 'nullable|string|max:255',
+            'no_hp'       => 'nullable|string|max:20',
+            'aktif'       => 'nullable|boolean',
+        ]);
+
+        $workerModel->update([
+            'nama_worker' => $request->nama_worker,
+            'posisi'      => $request->posisi,
+            'no_hp'       => $request->no_hp,
+            'aktif'       => $request->aktif ? true : false,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Data worker berhasil diperbarui',
+            'data'    => $workerModel
         ]);
     }
 }

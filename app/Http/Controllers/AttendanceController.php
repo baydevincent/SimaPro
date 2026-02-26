@@ -121,21 +121,22 @@ class AttendanceController extends Controller
             'kehadiran' => 'array'
         ]);
 
-        $projectWorkers = $attendanceModel->project->workers;
+        // Update berdasarkan attendance_workers yang sudah ada
+        foreach ($attendanceModel->attendanceWorkers as $aw) {
+            $kehadiranData = $request->input('kehadiran.' . $aw->id, []);
 
-        foreach ($projectWorkers as $pw) {
-            $kehadiranData = $request->input('kehadiran.' . $pw->id, []);
+            $aw->update([
+                'hadir' => !empty($kehadiranData['hadir']),
+                'keterangan' => $kehadiranData['keterangan'] ?? null
+            ]);
+        }
 
-            AttendanceWorker::updateOrCreate(
-                [
-                    'attendance_id' => $attendanceModel->id,
-                    'project_worker_id' => $pw->id
-                ],
-                [
-                    'hadir' => !empty($kehadiranData['hadir']), 
-                    'keterangan' => $kehadiranData['keterangan'] ?? null
-                ]
-            );
+        // Check if request is AJAX
+        if ($request->ajax() || $request->wantsJson() || $request->header('X-Requested-With')) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Absensi berhasil diperbarui.'
+            ]);
         }
 
         return redirect()->route('attendance.index', $attendanceModel->project)->with('success', 'Absensi berhasil diperbarui.');
@@ -143,14 +144,26 @@ class AttendanceController extends Controller
 
     public function destroy($project, $attendance)
     {
-        $attendanceModel = Attendance::where('id', $attendance)
-            ->where('project_id', $project)
-            ->firstOrFail();
+        try {
+            $attendanceModel = Attendance::where('id', $attendance)
+                ->where('project_id', $project)
+                ->with('project')
+                ->firstOrFail();
 
-        $projectModel = $attendanceModel->project;
-        $attendanceModel->delete();
+            $tanggal = $attendanceModel->tanggal;
 
-        return redirect()->route('attendance.index', $projectModel)->with('success', 'Absensi berhasil dihapus.');
+            $attendanceModel->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Absensi tanggal ' . \Carbon\Carbon::parse($tanggal)->format('d M Y') . ' berhasil dihapus'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menghapus absensi: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function getAttendanceForDate(Request $request, Project $project)

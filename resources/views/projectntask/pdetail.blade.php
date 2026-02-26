@@ -75,45 +75,53 @@
              role="tabpanel">
 
             <div class="card-header">
-                <form id="formCreateTask"
-                    data-action="{{ route('task.store',$project->id) }}">
-                    @csrf
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <form id="formCreateTask"
+                            data-action="{{ route('task.store',$project->id) }}">
+                            @csrf
 
-                    <div class="row align-items-center">
-                        <div class="col-md-5">
-                            <input name="nama_task"
-                                class="form-control"
-                                placeholder="Nama Task">
-                            <div class="invalid-feedback"></div>
-                        </div>
+                            <div class="row align-items-center">
+                                <div class="col-md-6">
+                                    <input name="nama_task"
+                                        class="form-control"
+                                        placeholder="Nama Task">
+                                    <div class="invalid-feedback"></div>
+                                </div>
 
-                        @auth
-                            @if(Auth::user()->hasRole('administrator'))
-                            <div class="col-md-4">
-                                <input name="bobot_rupiah"
-                                    class="form-control"
-                                    placeholder="Bobot Rupiah">
-                                <div class="invalid-feedback"></div>
+                                @auth
+                                    @if(Auth::user()->hasRole('administrator'))
+                                    <div class="col-md-4">
+                                        <input name="bobot_rupiah"
+                                            class="form-control"
+                                            placeholder="Bobot Rupiah">
+                                        <div class="invalid-feedback"></div>
+                                    </div>
+                                    @else
+                                    <div class="col-md-4">
+                                        <input type="hidden" name="bobot_rupiah" value="0">
+                                    </div>
+                                    @endif
+                                @else
+                                <div class="col-md-4">
+                                    <input type="hidden" name="bobot_rupiah" value="0">
+                                </div>
+                                @endauth
+
+                                <div class="col-md-2">
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="fas fa-plus"></i> Tambah
+                                    </button>
+                                </div>
                             </div>
-                            @else
-                            <div class="col-md-4">
-                                <input type="hidden" name="bobot_rupiah" value="0">
-                            </div>
-                            @endif
-                        @else
-                        <div class="col-md-4">
-                            <input type="hidden" name="bobot_rupiah" value="0">
-                        </div>
-                        @endauth
-
-                        <div class="col-md-3">
-                            <button type="submit"
-                                    class="btn btn-primary w-100">
-                                Tambah
-                            </button>
-                        </div>
+                        </form>
                     </div>
-                </form>
+                    <div class="col-md-2 text-right">
+                        <button class="btn btn-success w-100" data-toggle="modal" data-target="#importTaskModal">
+                            <i class="fas fa-file-excel mr-2"></i>Import Excel
+                        </button>
+                    </div>
+                </div>
             </div>
 
             {{-- LIST TASK --}}
@@ -170,6 +178,7 @@
                                 <button
                                     class="btn btn-danger btn-sm btn-delete-task"
                                     data-id="{{ $task->id }}"
+                                    data-name="{{ $task->nama_task }}"
                                     data-url="{{ route('task.destroy', $task->id) }}"
                                 >
                                     <i class="fas fa-trash"></i>
@@ -198,15 +207,21 @@
                     <h6 class="font-weight-bold mb-3">
                         List Pekerja
                     </h6>
-                    <button class="btn btn-primary" data-toggle="modal" data-target="#modalCreateWorker">
-                        + Tambah Worker
-                    </button>
+                    <div>
+                        <button class="btn btn-success mr-2" data-toggle="modal" data-target="#importWorkerModal">
+                            <i class="fas fa-file-excel mr-2"></i>Import Excel
+                        </button>
+                        <button class="btn btn-primary" data-toggle="modal" data-target="#modalCreateWorker">
+                            + Tambah Worker
+                        </button>
+                    </div>
                 </div>
 
                 <table class="table table-bordered mt-3">
                     <tr>
                         <th>Nama</th>
-                        <th>Jabatan</th>
+                        <th>Posisi</th>
+                        <th>No HP</th>
                         <th>Status</th>
                         <th>Aksi</th>
                     </tr>
@@ -214,14 +229,19 @@
                     @forelse($project->workers as $worker)
                     <tr>
                         <td>{{ $worker->nama_worker }}</td>
-                        <td>{{ $worker->jabatan }}</td>
+                        <td>{{ $worker->posisi }}</td>
+                        <td>{{ $worker->no_hp }}</td>
                         <td>
-                            <span class="badge {{ $worker->aktif ? 'badge-success':'badge-secondary' }}">
+                            <span class="badge {{ $worker->aktif ? 'badge-success':'badge-secondary' }} px-3 py-2">
                                 {{ $worker->aktif ? 'Aktif':'Nonaktif' }}
                             </span>
                         </td>
                         <td>
-                            <button class="btn btn-warning btn-sm" disabled>
+                            <button class="btn btn-warning btn-sm btn-edit-worker"
+                                    data-id="{{ $worker->id }}"
+                                    data-url="{{ route('project.workers.edit', ['project' => $project->id, 'worker' => $worker->id]) }}"
+                                    data-toggle="modal"
+                                    data-target="#modalEditWorker">
                                 <i class="fas fa-edit"></i>
                             </button>
                             <button class="btn btn-danger btn-sm btn-delete-worker"
@@ -241,6 +261,8 @@
                 </table>
             </div>
             @include('worker.create')
+            @include('worker.edit')
+            @include('worker.import-modal')
         </div>
 
         <!-- TAB 3 : ABSENSI PROJECT -->
@@ -299,9 +321,9 @@
                                         class="btn btn-info btn-sm"><i class="fas fa-eye"></i></a>
                                         <a href="{{ route('attendance.edit', ['project' => $project->id, 'attendance' => $attendance->id]) }}"
                                         class="btn btn-warning btn-sm"><i class="fas fa-edit"></i></a>
-                                        <button class="btn btn-danger btn-sm btn-delete-attendance"
-                                            data-id="{{ $attendance->id }}"
-                                            data-url="{{ route('attendance.destroy', ['project' => $project->id, 'attendance' => $attendance->id]) }}">
+                                        <button class="btn btn-danger btn-sm btn-delete-absen"
+                                                data-id="{{ $attendance->id }}"
+                                                data-url="{{ route('attendance.destroy', ['project' => $project->id, 'attendance' => $attendance->id]) }}">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </td>
@@ -327,9 +349,12 @@
 </div>
 
 @push('scripts')
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
 // Script untuk tab absensi
-document.addEventListener('DOMContentLoaded', function() {
+$(document).ready(function() {
+    console.log('Script loaded, jQuery version:', $.fn.jquery);
+    
     // Load attendance dates list when the attendance tab is shown
     $('#attendance-tab').on('shown.bs.tab', function() {
         loadAttendanceDates();
@@ -454,95 +479,15 @@ document.addEventListener('DOMContentLoaded', function() {
         return date.toLocaleDateString('id-ID', options);
     }
 
-    // Handle worker deletion
-    $(document).on('click', '.btn-delete-worker', function () {
-        const button = $(this);
-        const workerId = button.data('id');
-        const url = button.data('url');
-
-        if (confirm('Yakin ingin menghapus pekerja ini dari proyek?')) {
-            $.ajax({
-                url: url,
-                type: 'POST',
-                data: {
-                    '_method': 'DELETE',
-                    '_token': $('meta[name="csrf-token"]').attr('content')
-                },
-                success: function(response) {
-                    // Tampilkan alert sukses
-                    alert(response.message || 'Karyawan berhasil dihapus');
-
-                    // Refresh halaman atau hapus baris dari tabel
-                    location.reload();
-                },
-                error: function(xhr, status, error) {
-                    // Tampilkan alert error
-                    alert('Gagal menghapus karyawan: ' + (xhr.responseJSON?.message || 'Terjadi kesalahan'));
-                }
-            });
-        }
-    });
-
     // Auto-open attendance tab if URL contains #attendance
     if(window.location.hash === '#attendance') {
         $('#attendance-tab').tab('show');
     }
-
-    // Handle attendance deletion
-    $(document).on('click', '.btn-delete-attendance', function (e) {
-        e.preventDefault();
-        const button = $(this);
-        const attendanceId = button.data('id');
-        const url = button.data('url');
-
-        if (confirm('Yakin ingin menghapus absensi ini?')) {
-            $.ajax({
-                url: url,
-                type: 'POST',
-                data: {
-                    '_method': 'DELETE',
-                    '_token': $('meta[name="csrf-token"]').attr('content')
-                },
-                success: function(response) {
-                    // Tampilkan alert sukses
-                    alert(response.message || 'Absensi berhasil dihapus');
-
-                    // Hapus baris dari tabel tanpa reload
-                    const row = button.closest('tr');
-                    row.fadeOut(300, function() {
-                        row.remove();
-
-                        // Jika tidak ada data absensi lagi, tambahkan pesan
-                        const remainingRows = $('#attendance tbody tr:not(:contains("Belum ada data absensi"))').length;
-                        if (remainingRows === 0) {
-                            $('#attendance tbody').html(`
-                                <tr>
-                                    <td colspan="5" class="text-center">Belum ada data absensi</td>
-                                </tr>
-                            `);
-                        }
-
-                        // Refresh attendance statistics
-                        refreshAttendanceStats();
-                    });
-                },
-                error: function(xhr, status, error) {
-                    // Tampilkan alert error
-                    alert('Gagal menghapus absensi: ' + (xhr.responseJSON?.message || 'Terjadi kesalahan'));
-                }
-            });
-        }
-    });
-
-    // Function to update attendance statistics after deletion
-    function refreshAttendanceStats() {
-        // In a more advanced implementation, we would fetch updated stats via AJAX
-        // For now, we'll just notify the user that the page should be refreshed
-        // to see updated statistics
-        console.log('Attendance data removed. Statistics will be updated on next page load.');
-    }
 });
-</script>
+
+    </script>
+
+@include('task.import-modal')
 @endpush
 
 @endsection

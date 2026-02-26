@@ -243,4 +243,135 @@ $(document).on('submit', '#formAttendance', function (e) {
 
     alert('Absensi berhasil disimpan');
 });
+
+$(document).on('click', '.btn-delete-absen', function () {
+        const button = $(this);
+        const workerId = button.data('id');
+        const url = button.data('url');
+
+        if (confirm('Yakin ingin menghapus Absen?')) {
+            $.ajax({
+                url: url,
+                type: 'POST',
+                data: {
+                    '_method': 'DELETE',
+                    '_token': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    // Tampilkan alert sukses
+                    alert(response.message || 'Absen berhasil dihapus');
+
+                    // Refresh halaman atau hapus baris dari tabel
+                    location.reload();
+                },
+                error: function(xhr, status, error) {
+                    // Tampilkan alert error
+                    alert('Gagal menghapus Absen: ' + (xhr.responseJSON?.message || 'Terjadi kesalahan'));
+                }
+            });
+        }
+    });
+
+$(document).on('click', '.btn-edit-worker', function() {
+        const button = $(this);
+        const workerId = button.data('id');
+        const url = button.data('url');
+        
+        console.log('Edit worker clicked:', workerId, url);
+        
+        // Reset form dan alert
+        $('#formEditWorker')[0].reset();
+        $('#editErrorBox').addClass('d-none');
+        $('#editSuccessBox').addClass('d-none');
+        
+        // Show loading state
+        $('#btnUpdateWorker').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Loading...');
+        
+        // Fetch worker data
+        $.ajax({
+            url: url,
+            method: 'GET',
+            success: function(response) {
+                if (response.success && response.data) {
+                    const data = response.data;
+                    
+                    // Fill form dengan data worker
+                    $('#edit_worker_id').val(data.id);
+                    $('#edit_nama_worker').val(data.nama_worker);
+                    $('#edit_posisi').val(data.posisi || '');
+                    $('#edit_no_hp').val(data.no_hp || '');
+                    $('#edit_aktif').prop('checked', data.aktif);
+                    
+                    // Enable button
+                    $('#btnUpdateWorker').prop('disabled', false).html('Update');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading worker data:', error);
+                $('#editErrorBox').removeClass('d-none').text('Gagal memuat data worker');
+                $('#btnUpdateWorker').prop('disabled', false).html('Update');
+            }
+        });
+    });
+
+    // Handle Submit Edit Worker
+    $('#formEditWorker').on('submit', function(e) {
+        e.preventDefault();
+
+        const workerId = $('#edit_worker_id').val();
+        const projectId = $('#edit_project_id').val() || window.currentProjectId;
+        
+        if (!projectId) {
+            alert('Project ID tidak ditemukan');
+            return;
+        }
+        
+        const url = `/project/${projectId}/workers/${workerId}`;
+        
+        // Reset alerts
+        $('#editErrorBox').addClass('d-none');
+        $('#editSuccessBox').addClass('d-none');
+        
+        // Show loading state
+        $('#btnUpdateWorker').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Menyimpan...');
+        
+        $.ajax({
+            url: url,
+            method: 'POST',
+            data: {
+                _method: 'PUT',
+                _token: $('meta[name="csrf-token"]').attr('content'),
+                nama_worker: $('#edit_nama_worker').val(),
+                posisi: $('#edit_posisi').val(),
+                no_hp: $('#edit_no_hp').val(),
+                aktif: $('#edit_aktif').is(':checked') ? 1 : 0
+            },
+            success: function(response) {
+                if (response.success) {
+                    $('#editSuccessBox').removeClass('d-none').text(response.message || 'Data worker berhasil diperbarui');
+                    
+                    // Tutup modal setelah 1 detik
+                    setTimeout(function() {
+                        $('#modalEditWorker').modal('hide');
+                        // Reload halaman untuk update data
+                        location.reload();
+                    }, 1000);
+                } else {
+                    $('#editErrorBox').removeClass('d-none').text(response.message || 'Gagal memperbarui data worker');
+                    $('#btnUpdateWorker').prop('disabled', false).html('Update');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error updating worker:', error);
+                let errorMsg = 'Gagal memperbarui data worker';
+                
+                if (xhr.responseJSON && xhr.responseJSON.errors) {
+                    errorMsg = Object.values(xhr.responseJSON.errors).flat().join(', ');
+                }
+                
+                $('#editErrorBox').removeClass('d-none').text(errorMsg);
+                $('#btnUpdateWorker').prop('disabled', false).html('Update');
+            }
+        });
+    });
 </script>

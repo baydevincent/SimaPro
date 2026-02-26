@@ -10,11 +10,7 @@
                 Absensi Project
             @endif
         </h6>
-        @if(isset($project) && $project->id)
-            <a href="{{ route('project.show', ['project' => $attendanceModel->project->id]) }}" class="btn btn-sm btn-secondary">Kembali</a>
-        @else
-            <a href="{{ route('project') }}" class="btn btn-sm btn-secondary">Kembali</a>
-        @endif
+
     </div>
 
     <div class="card-body">
@@ -89,10 +85,15 @@ $(document).ready(function() {
     // Handle attendance deletion
     $(document).on('click', '.btn-delete-attendance-index', function () {
         const button = $(this);
+        const row = button.closest('tr');
         const attendanceId = button.data('id');
         const url = button.data('url');
+        
+        // Get the date from the table row
+        const tanggalCell = row.find('td:first').text();
+        const confirmMessage = `Apakah Anda yakin ingin menghapus absensi tanggal ${tanggalCell}?\\n\\nData yang dihapus tidak dapat dikembalikan.`;
 
-        if (confirm('Yakin ingin menghapus absensi ini?')) {
+        if (confirm(confirmMessage)) {
             $.ajax({
                 url: url,
                 type: 'POST',
@@ -100,25 +101,33 @@ $(document).ready(function() {
                     '_method': 'DELETE',
                     '_token': $('meta[name="csrf-token"]').attr('content')
                 },
+                beforeSend: function() {
+                    // Disable button while deleting
+                    button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Menghapus...');
+                },
                 success: function(response) {
                     // Tampilkan alert sukses
                     alert(response.message || 'Absensi berhasil dihapus');
 
-                    // Hapus baris dari tabel tanpa reload
-                    button.closest('tr').remove();
+                    // Hapus baris dari tabel dengan animasi
+                    row.fadeOut(300, function() {
+                        row.remove();
 
-                    // Jika tidak ada data absensi lagi, tambahkan pesan
-                    if ($('table tbody tr').length === 0) {
-                        $('table tbody').append(`
-                            <tr>
-                                <td colspan="5" class="text-center">Belum ada data absensi</td>
-                            </tr>
-                        `);
-                    }
+                        // Jika tidak ada data absensi lagi, tambahkan pesan
+                        if ($('table tbody tr').length === 0) {
+                            $('table tbody').html(`
+                                <tr>
+                                    <td colspan="5" class="text-center">Belum ada data absensi</td>
+                                </tr>
+                            `);
+                        }
+                    });
                 },
                 error: function(xhr, status, error) {
                     // Tampilkan alert error
                     alert('Gagal menghapus absensi: ' + (xhr.responseJSON?.message || 'Terjadi kesalahan'));
+                    // Re-enable button on error
+                    button.prop('disabled', false).html('Hapus');
                 }
             });
         }

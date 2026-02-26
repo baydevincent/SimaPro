@@ -29,7 +29,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($projectWorkers as $pw)
+                        @forelse($projectWorkers->where('aktif', 1) as $pw)
                             <tr>
                                 <td>{{ $pw->nama_worker }}</td>
                                 <td>

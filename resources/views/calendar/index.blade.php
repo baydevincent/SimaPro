@@ -280,7 +280,7 @@
                         locale: 'id', // Bahasa Indonesia
                         // Responsif settings - ubah aspect ratio untuk mobile
                         height: 'auto',
-                        aspectRatio: window.innerWidth < 768 ? 1.2 : 1.8, // Rasio yang lebih proporsional untuk mobile
+                        aspectRatio: window.innerWidth < 768 ? 1.2 : 1.8, // Rasio layar
                         stickyHeaderDates: true,
 
                         // Tampilan yang dioptimalkan untuk mobile
