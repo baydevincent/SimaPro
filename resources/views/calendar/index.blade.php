@@ -9,7 +9,7 @@
                     <h6 class="m-0 font-weight-bold text-primary">Kalender</h6>
                 </div>
                 <div class="card-body">
-                    <div id='calendar' class="calendar-responsive" style="min-height: 600px; border: 1px solid #ccc;"></div>
+                    <div id='calendar' class="calendar-responsive" style="min-height: 600px; border: 0px solid #ccc;"></div>
                 </div>
             </div>
         </div>
@@ -206,25 +206,20 @@
 @endpush
 
 @push('scripts')
-    <!-- FullCalendar CDN -->
-    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/locales/id.global.min.js"></script>
-
     <script>
-        // Tunggu DOM siap
         document.addEventListener('DOMContentLoaded', function() {
             console.log('DOM fully loaded and parsed');
-            document.getElementById('status').textContent = 'DOM siap, memeriksa elemen...';
 
             var calendarEl = document.getElementById('calendar');
             console.log('Calendar element found:', !!calendarEl);
-            document.getElementById('element-status').textContent = calendarEl ? 'Ditemukan' : 'Tidak ditemukan';
+
+            if (!calendarEl) {
+                console.error('Calendar element not found');
+                return;
+            }
 
             if (typeof FullCalendar !== 'undefined' && typeof FullCalendar.Calendar !== 'undefined') {
                 console.log('FullCalendar is ready');
-                document.getElementById('status').textContent = 'FullCalendar siap, membuat kalender...';
-                document.getElementById('fc-ready').textContent = 'Ya';
                 console.log('Creating calendar instance...');
 
                 // Deteksi ukuran layar untuk menentukan tampilan awal
@@ -306,7 +301,6 @@
                     console.log('Rendering calendar...');
                     calendar.render();
                     console.log('Calendar rendered successfully');
-                    document.getElementById('status').textContent = 'Kalender berhasil ditampilkan';
 
                     // Fungsi untuk menyesuaikan kalender saat ukuran window berubah
                     window.addEventListener('resize', function() {
@@ -339,7 +333,7 @@
                     });
                 } else {
                     console.error('FullCalendar is not loaded properly');
-                    document.getElementById('status').textContent = 'Error: FullCalendar tidak ditemukan';
+                    alert('Error: FullCalendar tidak dimuat dengan benar. Silakan refresh halaman.');
                     console.log('FullCalendar object:', typeof FullCalendar);
                     console.log('FullCalendar.Calendar:', typeof FullCalendar?.Calendar);
                     console.log('Available properties on window:', Object.keys(window).filter(key => key.toLowerCase().includes('calendar')));

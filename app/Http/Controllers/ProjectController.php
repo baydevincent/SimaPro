@@ -42,9 +42,10 @@ class ProjectController extends Controller
 
     public function show(Project $project)
     {
-        $project->load(['tasks', 'workers', 'attendances.attendanceWorkers', 'shopDrawings']);
+        $project->load(['tasks', 'workers', 'attendances.attendanceWorkers', 'shopDrawings', 'dailyReports.images']);
         $shopDrawings = $project->shopDrawings()->orderBy('created_at', 'desc')->get();
-        return view('projectntask.pdetail', compact('project', 'shopDrawings'));
+        $reports = $project->dailyReports()->with('images')->orderBy('tanggal', 'desc')->paginate(10);
+        return view('projectntask.pdetail', compact('project', 'shopDrawings', 'reports'));
     }
 
     public function destroy(Project $project)

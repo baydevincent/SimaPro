@@ -115,6 +115,7 @@
                                     <th>No</th>
                                     <th>Nama Pekerja</th>
                                     <th>Posisi</th>
+                                    <th>No Hp</th>
                                     <th>Status Kehadiran</th>
                                     <th>Keterangan</th>
                                 </tr>

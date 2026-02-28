@@ -342,6 +342,7 @@
         <div class="tab-pane fade"
              id="report"
              role="tabpanel">
+            @include('daily-reports.index-tab')
         </div>
 
     </div>

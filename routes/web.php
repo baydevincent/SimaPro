@@ -14,6 +14,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\ShopDrawingController;
 use App\Http\Controllers\TaskImportController;
 use App\Http\Controllers\WorkerImportController;
+use App\Http\Controllers\DailyReportController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -36,7 +37,7 @@ Route::get('/home', 'HomeController@index')->name('home');
 Route::get('/profile', 'ProfileController@index')->name('profile');
 Route::put('/profile', 'ProfileController@update')->name('profile.update');
 
-// Task Import (MUST BE BEFORE project resource routes)
+// Task Import
 Route::get('/project/{project}/task/import/template', [TaskImportController::class, 'downloadTemplate'])->name('task.import.template');
 Route::post('/project/{project}/task/import', [TaskImportController::class, 'import'])->name('task.import');
 Route::get('/project/{project}/task/import/errors', [TaskImportController::class, 'downloadErrorReport'])->name('task.import.errors');
@@ -92,6 +93,18 @@ Route::get('/project/{project}/shopdrawing', [ShopDrawingController::class, 'ind
 Route::post('/project/{project}/shopdrawing', [ShopDrawingController::class, 'store'])->name('shopdrawing.store');
 Route::get('/project/{project}/shopdrawing/{shopDrawing}/download', [ShopDrawingController::class, 'download'])->name('shopdrawing.download');
 Route::delete('/project/{project}/shopdrawing/{shopDrawing}', [ShopDrawingController::class, 'destroy'])->name('shopdrawing.destroy');
+
+// Daily Reports
+Route::get('/project/{project}/daily-reports', [DailyReportController::class, 'index'])->name('daily-reports.index');
+Route::get('/project/{project}/daily-reports/create', [DailyReportController::class, 'create'])->name('daily-reports.create');
+Route::post('/project/{project}/daily-reports', [DailyReportController::class, 'store'])->name('daily-reports.store');
+Route::get('/project/{project}/daily-reports/workers-count', [DailyReportController::class, 'getWorkersCount'])->name('daily-reports.workers-count');
+Route::get('/project/{project}/daily-reports/{report}', [DailyReportController::class, 'show'])->name('daily-reports.show');
+Route::get('/project/{project}/daily-reports/{report}/detail', [DailyReportController::class, 'showDetail'])->name('daily-reports.show-detail');
+Route::get('/project/{project}/daily-reports/{report}/edit', [DailyReportController::class, 'edit'])->name('daily-reports.edit');
+Route::get('/project/{project}/daily-reports/{report}/download-pdf', [DailyReportController::class, 'downloadPdf'])->name('daily-reports.download-pdf');
+Route::put('/project/{project}/daily-reports/{report}', [DailyReportController::class, 'update'])->name('daily-reports.update');
+Route::delete('/project/{project}/daily-reports/{report}', [DailyReportController::class, 'destroy'])->name('daily-reports.destroy');
 
 // User Management
 Route::group(['middleware' => ['auth', 'role:administrator']], function () {

@@ -114,6 +114,11 @@ class Project extends Model
         return $this->hasMany(ShopDrawing::class);
     }
 
+    public function dailyReports()
+    {
+        return $this->hasMany(DailyReport::class);
+    }
+
     // Methods
 
     public function totalBobot()

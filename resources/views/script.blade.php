@@ -1,49 +1,60 @@
+<!-- <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.20/index.global.min.js"></script> -->
 <script>
-$.ajaxSetup({
-    headers: {
-        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+// Wait for jQuery to be available
+function waitForJQuery(callback) {
+    if (typeof jQuery !== 'undefined') {
+        callback();
+    } else {
+        setTimeout(function() {
+            waitForJQuery(callback);
+        }, 50);
     }
-});
+}
 
-$('#formCreateProject').on('submit', function(e){
-    e.preventDefault();
+waitForJQuery(function() {
+    $.ajaxSetup({
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        }
+    });
 
-    $('#errorBox').addClass('d-none').html('');
-    $('.form-control').removeClass('is-invalid');
-    $('.invalid-feedback').html('');
-
-    $.ajax({
-        url: "{{ route('project.store') }}",
-        method: "POST",
-        data: $(this).serialize(),
-        success: function(res){
-            $('#modalCreateProject').modal('hide');
-            alert(res.message);
-            location.reload();
-        },
-        error: function(xhr){
-            if (xhr.status === 422) {
-                let errors = xhr.responseJSON.errors;
-                let list = '<ul>';
-
-                $.each(errors, function(field, messages){
-                    list += `<li>${messages[0]}</li>`;
-
-                    let input = $(`[name="${field}"]`);
-                    input.addClass('is-invalid');
-                    input.next('.invalid-feedback').html(messages[0]);
-                });
-
-                list += '</ul>';
-
-                $('#errorBox')
-                    .removeClass('d-none')
-                    .html(list);
+    $(document).ready(function() {
+        console.log('Tab persistence script loaded');
+        
+        // 1. Get active tab from URL hash first, then localStorage
+        let activeTab = window.location.hash || localStorage.getItem('activeTab');
+        
+        if (activeTab) {
+            // Remove # if present
+            activeTab = activeTab.replace('#', '');
+            console.log('Restoring tab:', activeTab);
+            
+            // Find and show the tab
+            let tabLink = $('a[href="#' + activeTab + '"][data-toggle="tab"]');
+            if (tabLink.length) {
+                console.log('Tab link found:', tabLink);
+                tabLink.tab('show');
+            } else {
+                console.log('Tab link not found for:', activeTab);
             }
         }
+
+        $('a[data-toggle="tab"]').on('click', function(e) {
+            e.preventDefault();
+            let href = $(this).attr('href');
+            let tabId = href.replace('#', '');
+            
+            localStorage.setItem('activeTab', tabId);
+            window.location.hash = tabId;
+            
+            $(this).tab('show');
+        });
     });
 });
 
+
+
+waitForJQuery(function() {
 $('#formCreateProject').on('submit', function(e){
     e.preventDefault();
 
@@ -198,8 +209,6 @@ $(document).on('submit', '#formCreateWorker', function (e) {
     });
 });
 
-
-
 $(document).on('click', '.btn-delete-worker', function () {
 
     let url = $(this).data('url');
@@ -258,14 +267,11 @@ $(document).on('click', '.btn-delete-absen', function () {
                     '_token': $('meta[name="csrf-token"]').attr('content')
                 },
                 success: function(response) {
-                    // Tampilkan alert sukses
                     alert(response.message || 'Absen berhasil dihapus');
 
-                    // Refresh halaman atau hapus baris dari tabel
                     location.reload();
                 },
                 error: function(xhr, status, error) {
-                    // Tampilkan alert error
                     alert('Gagal menghapus Absen: ' + (xhr.responseJSON?.message || 'Terjadi kesalahan'));
                 }
             });
@@ -277,17 +283,12 @@ $(document).on('click', '.btn-edit-worker', function() {
         const workerId = button.data('id');
         const url = button.data('url');
         
-        console.log('Edit worker clicked:', workerId, url);
-        
-        // Reset form dan alert
         $('#formEditWorker')[0].reset();
         $('#editErrorBox').addClass('d-none');
         $('#editSuccessBox').addClass('d-none');
         
-        // Show loading state
         $('#btnUpdateWorker').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Loading...');
         
-        // Fetch worker data
         $.ajax({
             url: url,
             method: 'GET',
@@ -295,7 +296,6 @@ $(document).on('click', '.btn-edit-worker', function() {
                 if (response.success && response.data) {
                     const data = response.data;
                     
-                    // Fill form dengan data worker
                     $('#edit_worker_id').val(data.id);
                     $('#edit_nama_worker').val(data.nama_worker);
                     $('#edit_posisi').val(data.posisi || '');
@@ -328,11 +328,9 @@ $(document).on('click', '.btn-edit-worker', function() {
         
         const url = `/project/${projectId}/workers/${workerId}`;
         
-        // Reset alerts
         $('#editErrorBox').addClass('d-none');
         $('#editSuccessBox').addClass('d-none');
         
-        // Show loading state
         $('#btnUpdateWorker').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Menyimpan...');
         
         $.ajax({
@@ -350,10 +348,8 @@ $(document).on('click', '.btn-edit-worker', function() {
                 if (response.success) {
                     $('#editSuccessBox').removeClass('d-none').text(response.message || 'Data worker berhasil diperbarui');
                     
-                    // Tutup modal setelah 1 detik
                     setTimeout(function() {
                         $('#modalEditWorker').modal('hide');
-                        // Reload halaman untuk update data
                         location.reload();
                     }, 1000);
                 } else {
@@ -364,14 +360,191 @@ $(document).on('click', '.btn-edit-worker', function() {
             error: function(xhr, status, error) {
                 console.error('Error updating worker:', error);
                 let errorMsg = 'Gagal memperbarui data worker';
-                
+
                 if (xhr.responseJSON && xhr.responseJSON.errors) {
                     errorMsg = Object.values(xhr.responseJSON.errors).flat().join(', ');
                 }
-                
+
                 $('#editErrorBox').removeClass('d-none').text(errorMsg);
                 $('#btnUpdateWorker').prop('disabled', false).html('Update');
             }
         });
     });
+
+    $(document).on('change', '#multiple-image-upload', function() {
+        const files = this.files;
+        const previewContainer = $('#image-preview-container');
+        
+        let label = $(this).next('.custom-file-label');
+        if (!label.length) {
+            label = $(this).siblings('.custom-file-label');
+        }
+        if (!label.length) {
+            label = $(this).parent().find('.custom-file-label');
+        }
+        
+        previewContainer.empty();
+        
+        if (files && files.length > 0) {
+            if (files.length === 1) {
+                label.text(files[0].name);
+            } else {
+                label.text(files.length + ' foto dipilih');
+            }
+            label.addClass('selected');
+            
+            $.each(files, function(index, file) {
+                if (!file.type.match('image.*')) {
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const previewHtml = `
+                        <div class="col-md-3 mb-3">
+                            <div class="card">
+                                <img src="${e.target.result}" class="card-img-top" style="height: 150px; object-fit: cover;">
+                                <div class="card-body p-2">
+                                    <input type="text" name="captions[]" class="form-control form-control-sm mb-2" placeholder="Keterangan foto ${index + 1}">
+                                    <small class="text-muted d-block text-truncate" title="${file.name}">${file.name}</small>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    previewContainer.append(previewHtml);
+                };
+                reader.readAsDataURL(file);
+            });
+        } else {
+            label.removeClass('selected').text('Pilih foto...');
+        }
+    });
+
+    $(document).on('click', '#add-image-input', function(e) {
+        e.preventDefault();
+        const newInput = `
+            <div class="image-input-wrapper mb-3">
+                <div class="row align-items-end">
+                    <div class="col-md-8">
+                        <div class="custom-file">
+                            <input type="file" name="additional_images[]" class="custom-file-input image-input" accept="image/*" multiple>
+                            <label class="custom-file-label" data-browse="Browse">Pilih foto tambahan...</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <input type="text" name="additional_captions[]" class="form-control mb-2" placeholder="Keterangan foto (opsional)">
+                        <button type="button" class="btn btn-sm btn-danger btn-block remove-image">
+                            <i class="fas fa-trash"></i> Hapus
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        $('#image-upload-container').append(newInput);
+    });
+
+    $(document).on('click', '.remove-image', function(e) {
+        e.preventDefault();
+        $(this).closest('.image-input-wrapper').remove();
+    });
+
+    $(document).on('change', '.custom-file-input', function() {
+        const input = $(this);
+        const label = input.next('.custom-file-label');
+        const files = this.files;
+        
+        if (files && files.length > 0) {
+            if (files.length === 1) {
+                label.text(files[0].name);
+            } else {
+                let fileNames = Array.from(files).map(f => f.name).slice(0, 3).join(', ');
+                if (files.length > 3) {
+                    fileNames += ' dan ' + (files.length - 3) + ' foto lainnya';
+                }
+                label.text(fileNames);
+            }
+            label.addClass('selected');
+        } else {
+            label.removeClass('selected').text('Pilih foto...');
+        }
+    });
+
+    $(document).on('change', '#tanggal', function() {
+        const date = $(this).val();
+        const form = $(this).closest('form');
+        const projectId = form.data('project-id') || window.currentProjectId;
+
+        if (!projectId) {
+            return;
+        }
+
+        $.ajax({
+            url: `/project/${projectId}/daily-reports/workers-count`,
+            method: 'GET',
+            data: { tanggal: date },
+            success: function(response) {
+                $('#jumlah_pekerja').val(response.total_workers || 0);
+                const dateObj = new Date(date);
+                const dateStr = dateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+                $('#jumlah_pekerja').siblings('.form-text').text(
+                    'Otomatis dari data absensi tanggal ' + dateStr
+                );
+            },
+            error: function() {
+                $('#jumlah_pekerja').val(0);
+            }
+        });
+    });
+
+    $(document).ready(function() {
+        if ($('#tanggal').length && $('#jumlah_pekerja').length) {
+            $('#tanggal').trigger('change');
+        }
+    });
+
+    // Handle multiple file upload for edit form
+    $(document).on('change', '#edit-multiple-image-upload', function() {
+        const files = this.files;
+        const previewContainer = $('#edit-image-preview-container');
+        const label = $(this).next('.custom-file-label');
+        
+        previewContainer.empty();
+        
+        if (files && files.length > 0) {
+            // Update label
+            if (files.length === 1) {
+                label.text(files[0].name);
+            } else {
+                label.text(files.length + ' foto dipilih');
+            }
+            label.addClass('selected');
+            
+            // Create preview
+            $.each(files, function(index, file) {
+                if (!file.type.match('image.*')) {
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const previewHtml = `
+                        <div class="col-md-3 mb-3">
+                            <div class="card">
+                                <img src="${e.target.result}" class="card-img-top" style="height: 150px; object-fit: cover;">
+                                <div class="card-body p-2">
+                                    <input type="text" name="captions[]" class="form-control form-control-sm mb-2" placeholder="Keterangan foto ${index + 1}">
+                                    <small class="text-muted d-block text-truncate" title="${file.name}">${file.name}</small>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    previewContainer.append(previewHtml);
+                };
+                reader.readAsDataURL(file);
+            });
+        } else {
+            label.removeClass('selected').text('Pilih foto (bisa multiple)...');
+        }
+    });
+}); 
 </script>

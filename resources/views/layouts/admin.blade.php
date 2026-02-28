@@ -187,8 +187,14 @@
 <script src="{{ asset('vendor/bootstrap/js/bootstrap.min.js') }}"></script>
 <script src="{{ asset('vendor/jquery-easing/jquery.easing.min.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ asset('js/cal.index.global.min.js') }}"></script>
 <script src="{{ asset('js/sb-admin-2.min.js') }}"></script>
 
+@if(isset($project))
+<script>
+    window.currentProjectId = {{ $project->id }};
+</script>
+@endif
 
 @include('script')
 
