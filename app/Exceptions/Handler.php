@@ -3,6 +3,10 @@
 namespace App\Exceptions;
 
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -54,6 +58,50 @@ class Handler extends ExceptionHandler
             return redirect('/');
         }
 
+        // Handle JWT authentication exceptions for API requests
+        if ($request->is('api/*')) {
+            if ($exception instanceof \Tymon\JWTAuth\Exceptions\TokenInvalidException) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid token',
+                ], 401);
+            }
+
+            if ($exception instanceof \Tymon\JWTAuth\Exceptions\TokenExpiredException) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Token expired',
+                    'error' => 'token_expired',
+                ], 401);
+            }
+
+            if ($exception instanceof \Tymon\JWTAuth\Exceptions\JWTException) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Token not provided',
+                ], 401);
+            }
+        }
+
         return parent::render($request, $exception);
+    }
+
+    /**
+     * Convert an authentication exception into an unauthenticated response.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \Illuminate\Auth\AuthenticationException  $exception
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
+    protected function unauthenticated($request, AuthenticationException $exception): Response
+    {
+        if ($request->expectsJson() || $request->is('api/*')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated',
+            ], 401);
+        }
+
+        return redirect()->guest(route('login'));
     }
 }

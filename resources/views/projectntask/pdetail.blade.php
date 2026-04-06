@@ -77,6 +77,8 @@
             <div class="card-header">
                 <div class="row align-items-center">
                     <div class="col-md-6">
+                        @auth
+                            @if(!Auth::user()->hasRole('mandor'))
                         <form id="formCreateTask"
                             data-action="{{ route('task.store',$project->id) }}">
                             @csrf
@@ -89,24 +91,18 @@
                                     <div class="invalid-feedback"></div>
                                 </div>
 
-                                @auth
-                                    @if(Auth::user()->hasRole('administrator'))
-                                    <div class="col-md-4">
-                                        <input name="bobot_rupiah"
-                                            class="form-control"
-                                            placeholder="Bobot Rupiah">
-                                        <div class="invalid-feedback"></div>
-                                    </div>
-                                    @else
-                                    <div class="col-md-4">
-                                        <input type="hidden" name="bobot_rupiah" value="0">
-                                    </div>
-                                    @endif
+                                @if(Auth::user()->hasRole('administrator'))
+                                <div class="col-md-4">
+                                    <input name="bobot_rupiah"
+                                        class="form-control"
+                                        placeholder="Bobot Rupiah">
+                                    <div class="invalid-feedback"></div>
+                                </div>
                                 @else
                                 <div class="col-md-4">
                                     <input type="hidden" name="bobot_rupiah" value="0">
                                 </div>
-                                @endauth
+                                @endif
 
                                 <div class="col-md-2">
                                     <button type="submit" class="btn btn-primary w-100">
@@ -115,16 +111,28 @@
                                 </div>
                             </div>
                         </form>
+                            @else
+                        <p class="text-muted mb-0">
+                            <i class="fas fa-info-circle"></i> Hanya administrator yang bisa menambah task.
+                        </p>
+                            @endif
+                        @else
+                        <p class="text-muted mb-0">Silakan login untuk menambah task.</p>
+                        @endauth
                     </div>
+                    @auth
+                        @if(!Auth::user()->hasRole('mandor'))
                     <div class="col-md-2 text-right">
                         <button class="btn btn-success w-100" data-toggle="modal" data-target="#importTaskModal">
                             <i class="fas fa-file-excel mr-2"></i>Import Excel
                         </button>
                     </div>
+                        @endif
+                    @endauth
                 </div>
             </div>
 
-            {{-- LIST TASK --}}
+            <!-- TASK -->
             <div class="card-body">
                 <table class="table table-bordered">
                     <thead>
@@ -172,6 +180,8 @@
                                 </form>
                             </td>
                             <td>
+                                @auth
+                                    @if(!Auth::user()->hasRole('mandor'))
                                 <a href="{{ route('task.edit', $task->id) }}" class="btn btn-warning btn-sm">
                                     <i class="fas fa-edit"></i>
                                 </a>
@@ -183,6 +193,10 @@
                                 >
                                     <i class="fas fa-trash"></i>
                                 </button>
+                                    @else
+                                <span class="text-muted">-</span>
+                                    @endif
+                                @endauth
                             </td>
                         </tr>
                         @empty
@@ -197,7 +211,7 @@
             </div>
         </div>
 
-        <!-- TAB 2 : WORKER PROJECT -->
+        <!-- WORKER -->
         <div class="tab-pane fade"
              id="projectworker"
              role="tabpanel">
@@ -265,7 +279,7 @@
             @include('worker.import-modal')
         </div>
 
-        <!-- TAB 3 : ABSENSI PROJECT -->
+        <!-- ABSENSI -->
         <div class="tab-pane fade"
              id="attendance"
              role="tabpanel">
@@ -339,6 +353,7 @@
             </div>
         </div>
 
+        <!-- LAPORAN HARIAN -->
         <div class="tab-pane fade"
              id="report"
              role="tabpanel">
@@ -351,142 +366,6 @@
 
 @push('scripts')
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script>
-// Script untuk tab absensi
-$(document).ready(function() {
-    console.log('Script loaded, jQuery version:', $.fn.jquery);
-    
-    // Load attendance dates list when the attendance tab is shown
-    $('#attendance-tab').on('shown.bs.tab', function() {
-        loadAttendanceDates();
-    });
-
-    // Trigger the event if the attendance tab is already active
-    if ($('#attendance').hasClass('show')) {
-        loadAttendanceDates();
-    });
-
-    function loadAttendanceDates() {
-        $.ajax({
-            url: "{{ route('attendance.dates.list', ['project' => $project->id]) }}",
-            method: 'GET',
-            success: function(response) {
-                let datesHtml = '';
-
-                if (response.dates && response.dates.length > 0) {
-                    datesHtml += '<ul class="list-group">';
-
-                    response.dates.forEach(function(dateItem) {
-                        datesHtml += `
-                            <li class="list-group-item">
-                                <a href="#" class="date-link" data-date="${dateItem.tanggal}">
-                                    ${dateItem.tanggal_formatted}
-                                </a>
-                            </li>
-                        `;
-                    });
-
-                    datesHtml += '</ul>';
-                } else {
-                    datesHtml = '<div class="alert alert-info">Belum ada data absensi</div>';
-                }
-
-                document.getElementById('attendance-dates-list').innerHTML = datesHtml;
-
-                // Add click event to date links
-                document.querySelectorAll('.date-link').forEach(link => {
-                    link.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        const selectedDate = this.getAttribute('data-date');
-                        loadAttendanceDetails(selectedDate);
-                    });
-                });
-            },
-            error: function(xhr, status, error) {
-                console.error('Error loading attendance dates:', error);
-                document.getElementById('attendance-dates-list').innerHTML =
-                    '<div class="alert alert-danger">Gagal memuat data absensi</div>';
-            }
-        });
-    }
-
-    function loadAttendanceDetails(date) {
-        $.ajax({
-            url: "{{ route('attendance.date.data', ['project' => $project->id]) }}",
-            method: 'GET',
-            data: {
-                tanggal: date
-            },
-            success: function(response) {
-                let detailsHtml = '';
-
-                if (response.attendance_data && response.attendance_data.length > 0) {
-                    detailsHtml += `
-                        <h6 class="font-weight-bold">Tanggal: ${formatDisplayDate(date)}</h6>
-                        <div class="table-responsive">
-                            <table class="table table-sm table-bordered">
-                                <thead>
-                                    <tr>
-                                        <th>Nama Worker</th>
-                                        <th>Status</th>
-                                        <th>Keterangan</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                    `;
-
-                    response.attendance_data.forEach(function(item) {
-                        const workerName = item.project_worker ? item.project_worker.nama_worker :
-                                          (item.worker ? item.worker.nama_worker : 'N/A');
-                        const hadir = item.hadir !== undefined ? item.hadir : (item.attendanceWorkers ? item.attendanceWorkers.hadir : null);
-                        const keterangan = item.keterangan !== undefined ? item.keterangan : (item.attendanceWorkers ? item.attendanceWorkers.keterangan : '-');
-
-                        detailsHtml += `
-                            <tr>
-                                <td>${workerName}</td>
-                                <td>
-                                    <span class="badge ${hadir ? 'badge-success' : 'badge-danger'}">
-                                        ${hadir ? 'Hadir' : 'Tidak Hadir'}
-                                    </span>
-                                </td>
-                                <td>${keterangan || '-'}</td>
-                            </tr>
-                        `;
-                    });
-
-                    detailsHtml += `
-                                </tbody>
-                            </table>
-                        </div>
-                    `;
-                } else {
-                    detailsHtml = `<div class="alert alert-info">Tidak ada data kehadiran untuk tanggal ${formatDisplayDate(date)}</div>`;
-                }
-
-                document.getElementById('attendance-details').innerHTML = detailsHtml;
-            },
-            error: function(xhr, status, error) {
-                console.error('Error loading attendance details:', error);
-                document.getElementById('attendance-details').innerHTML =
-                    '<div class="alert alert-danger">Gagal memuat detail kehadiran</div>';
-            }
-        });
-    }
-
-    // Helper function to format date for display
-    function formatDisplayDate(dateString) {
-        const date = new Date(dateString);
-        const options = { day: 'numeric', month: 'short', year: 'numeric' };
-        return date.toLocaleDateString('id-ID', options);
-    }
-
-    // Auto-open attendance tab if URL contains #attendance
-    if(window.location.hash === '#attendance') {
-        $('#attendance-tab').tab('show');
-    }
-});
-
-    </script>
 
 @include('task.import-modal')
 @endpush

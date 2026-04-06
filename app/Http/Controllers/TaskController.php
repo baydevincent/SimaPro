@@ -11,6 +11,13 @@ class TaskController extends Controller
 {
     public function store(Request $request, Project $project)
     {
+        // Mandor tidak bisa membuat task
+        if (auth()->user()->hasRole('mandor')) {
+            return response()->json([
+                'message' => 'Akses ditolak. Mandor tidak dapat menambah task.'
+            ], 403);
+        }
+
         $validatedData = $request->validate([
             'nama_task' => 'required|string',
         ]);
@@ -40,6 +47,12 @@ class TaskController extends Controller
 
     public function update(Request $request, Task $task)
     {
+        // Mandor tidak bisa mengupdate task
+        if (auth()->user()->hasRole('mandor')) {
+            return redirect()->route('project.show', $task->project->id)
+                ->with('error', 'Akses ditolak. Mandor tidak dapat mengupdate task.');
+        }
+
         $validatedData = $request->validate([
             'nama_task' => 'required|string',
         ]);
@@ -61,6 +74,13 @@ class TaskController extends Controller
 
     public function destroy(Task $task)
     {
+        // Mandor tidak bisa menghapus task
+        if (auth()->user()->hasRole('mandor')) {
+            return response()->json([
+                'message' => 'Akses ditolak. Mandor tidak dapat menghapus task.'
+            ], 403);
+        }
+
         $task->delete();
 
         return response()->json([

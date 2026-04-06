@@ -32,90 +32,88 @@ Route::get('/', function () {
 
 Auth::routes();
 
-Route::get('/home', 'HomeController@index')->name('home');
+Route::middleware(['auth'])->group(function () {
+    
+    Route::get('/home', 'HomeController@index')->name('home');
 
-Route::get('/profile', 'ProfileController@index')->name('profile');
-Route::put('/profile', 'ProfileController@update')->name('profile.update');
+    Route::get('/profile', 'ProfileController@index')->name('profile');
+    Route::put('/profile', 'ProfileController@update')->name('profile.update');
 
-// Task Import
-Route::get('/project/{project}/task/import/template', [TaskImportController::class, 'downloadTemplate'])->name('task.import.template');
-Route::post('/project/{project}/task/import', [TaskImportController::class, 'import'])->name('task.import');
-Route::get('/project/{project}/task/import/errors', [TaskImportController::class, 'downloadErrorReport'])->name('task.import.errors');
+    // Task Import
+    Route::get('/project/{project}/task/import/template', [TaskImportController::class, 'downloadTemplate'])->name('task.import.template');
+    Route::post('/project/{project}/task/import', [TaskImportController::class, 'import'])->name('task.import');
+    Route::get('/project/{project}/task/import/errors', [TaskImportController::class, 'downloadErrorReport'])->name('task.import.errors');
 
-// Project
-Route::resource('project', ProjectController::class)->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy']);
+    // Project
+    Route::resource('project', ProjectController::class)->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy']);
 
-Route::get('/project', [ProjectController::class, 'index'])->name('project');
+    Route::get('/project', [ProjectController::class, 'index'])->name('project');
 
-Route::resource('task', TaskController::class)->only(['destroy', 'update', 'edit']);
-Route::post('project/{project}/task', [TaskController::class, 'store'])->name('task.store');
-Route::patch('task/{task}/toggle', [TaskController::class, 'toggle'])->name('task.toggle');
+    Route::resource('task', TaskController::class)->only(['destroy', 'update', 'edit']);
+    Route::post('project/{project}/task', [TaskController::class, 'store'])->name('task.store');
+    Route::patch('task/{task}/toggle', [TaskController::class, 'toggle'])->name('task.toggle');
 
-// Worker
-Route::resource('worker', ProjectWorkerController::class)->only(['show', 'destroy', 'edit']);
+    // Worker
+    Route::resource('worker', ProjectWorkerController::class)->only(['show', 'destroy', 'edit']);
 
-Route::post('/project/{project}/workers',[ProjectWorkerController::class, 'store'])->name('project.workers.store');
-Route::get('/project/{project}/attendance',[WorkerAttendanceController::class, 'index'])->name('attendance.index');
-Route::get('/project/{project}/workers', [ProjectWorkerController::class, 'index'])->name('project.workers');
-Route::post('/project/{project}/workers', [ProjectWorkerController::class, 'store'])->name('project.workers.store');
-Route::delete('/project/{project}/workers/{worker}', [ProjectWorkerController::class, 'destroy'])->name('project.workers.destroy');
-Route::get('/project/{project}/workers/{worker}/edit', [ProjectWorkerController::class, 'edit'])->name('project.workers.edit');
-Route::put('/project/{project}/workers/{worker}', [ProjectWorkerController::class, 'update'])->name('project.workers.update');
+    Route::post('/project/{project}/workers',[ProjectWorkerController::class, 'store'])->name('project.workers.store');
+    Route::get('/project/{project}/attendance',[WorkerAttendanceController::class, 'index'])->name('attendance.index');
+    Route::get('/project/{project}/workers', [ProjectWorkerController::class, 'index'])->name('project.workers');
+    Route::post('/project/{project}/workers', [ProjectWorkerController::class, 'store'])->name('project.workers.store');
+    Route::delete('/project/{project}/workers/{worker}', [ProjectWorkerController::class, 'destroy'])->name('project.workers.destroy');
+    Route::get('/project/{project}/workers/{worker}/edit', [ProjectWorkerController::class, 'edit'])->name('project.workers.edit');
+    Route::put('/project/{project}/workers/{worker}', [ProjectWorkerController::class, 'update'])->name('project.workers.update');
 
-// Worker Import
-Route::get('/project/{project}/workers/import', [WorkerImportController::class, 'showForm'])->name('project.workers.import.form');
-Route::post('/project/{project}/workers/import', [WorkerImportController::class, 'import'])->name('project.workers.import');
-Route::get('/project/{project}/workers/import/template', [WorkerImportController::class, 'downloadTemplate'])->name('project.workers.import.template');
-Route::get('/project/{project}/workers/import/errors', [WorkerImportController::class, 'downloadErrorReport'])->name('project.workers.import.errors');
+    // Worker Import
+    Route::get('/project/{project}/workers/import', [WorkerImportController::class, 'showForm'])->name('project.workers.import.form');
+    Route::post('/project/{project}/workers/import', [WorkerImportController::class, 'import'])->name('project.workers.import');
+    Route::get('/project/{project}/workers/import/template', [WorkerImportController::class, 'downloadTemplate'])->name('project.workers.import.template');
+    Route::get('/project/{project}/workers/import/errors', [WorkerImportController::class, 'downloadErrorReport'])->name('project.workers.import.errors');
 
-Route::post('/absensi/toggle',[WorkerAttendanceController::class, 'toggle'])->name('absensi.toggle');
+    // Route::post('/absensi/toggle',[WorkerAttendanceController::class, 'toggle'])->name('absensi.toggle');
 
-// Absen CRUD
-Route::get('/project/{project}/attendance', [AttendanceController::class, 'index'])->name('attendance.index');
-Route::get('/project/{project}/attendance/create', [AttendanceController::class, 'create'])->name('attendance.create');
-Route::post('/project/{project}/attendance', [AttendanceController::class, 'store'])->name('attendance.store');
-Route::get('/project/{project}/attendance/{attendance}', [AttendanceController::class, 'show'])->name('attendance.show');
-Route::get('/project/{project}/attendance/{attendance}/edit', [AttendanceController::class, 'edit'])->name('attendance.edit');
-Route::put('/project/{project}/attendance/{attendance}', [AttendanceController::class, 'update'])->name('attendance.update');
-Route::delete('/project/{project}/attendance/{attendance}', [AttendanceController::class, 'destroy'])->name('attendance.destroy');
-Route::get('/project/{project}/attendance/date-data', [AttendanceController::class, 'getAttendanceForDate'])->name('attendance.date.data');
-Route::get('/project/{project}/attendance/dates', [AttendanceController::class, 'getAttendanceDates'])->name('attendance.dates.list');
+    // Absen CRUD
+    Route::get('/project/{project}/attendance', [AttendanceController::class, 'index'])->name('attendance.index');
+    Route::get('/project/{project}/attendance/create', [AttendanceController::class, 'create'])->name('attendance.create');
+    Route::post('/project/{project}/attendance', [AttendanceController::class, 'store'])->name('attendance.store');
+    Route::get('/project/{project}/attendance/{attendance}', [AttendanceController::class, 'show'])->name('attendance.show');
+    Route::get('/project/{project}/attendance/{attendance}/edit', [AttendanceController::class, 'edit'])->name('attendance.edit');
+    Route::put('/project/{project}/attendance/{attendance}', [AttendanceController::class, 'update'])->name('attendance.update');
+    Route::delete('/project/{project}/attendance/{attendance}', [AttendanceController::class, 'destroy'])->name('attendance.destroy');
+    // Route::get('/project/{project}/attendance/date-data', [AttendanceController::class, 'getAttendanceForDate'])->name('attendance.date.data');
+    // Route::get('/project/{project}/attendance/dates', [AttendanceController::class, 'getAttendanceDates'])->name('attendance.dates.list');
 
-// Kalender
-Route::get('/calendar', [CalendarController::class, 'index'])->name('calendar.index');
-Route::get('/project/{project}/gantt', function ($projectId) {
-    $project = \App\Models\Project::findOrFail($projectId);
-    return view('projectntask.gantt', compact('project'));
-})->name('project.gantt');
+    // Kalender
+    Route::get('/calendar', [CalendarController::class, 'index'])->name('calendar.index');
+    // Route::get('/project/{project}/gantt', function ($projectId) {
+    //     $project = \App\Models\Project::findOrFail($projectId);
+    //     return view('projectntask.gantt', compact('project'));
+    // })->name('project.gantt');
 
-// Shop Drawing
-Route::get('/project/{project}/shopdrawing', [ShopDrawingController::class, 'index'])->name('shopdrawing.index');
-Route::post('/project/{project}/shopdrawing', [ShopDrawingController::class, 'store'])->name('shopdrawing.store');
-Route::get('/project/{project}/shopdrawing/{shopDrawing}/download', [ShopDrawingController::class, 'download'])->name('shopdrawing.download');
-Route::delete('/project/{project}/shopdrawing/{shopDrawing}', [ShopDrawingController::class, 'destroy'])->name('shopdrawing.destroy');
+    // Shop Drawing
+    Route::get('/project/{project}/shopdrawing', [ShopDrawingController::class, 'index'])->name('shopdrawing.index');
+    Route::post('/project/{project}/shopdrawing', [ShopDrawingController::class, 'store'])->name('shopdrawing.store');
+    Route::get('/project/{project}/shopdrawing/{shopDrawing}/download', [ShopDrawingController::class, 'download'])->name('shopdrawing.download');
+    Route::delete('/project/{project}/shopdrawing/{shopDrawing}', [ShopDrawingController::class, 'destroy'])->name('shopdrawing.destroy');
 
-// Daily Reports
-Route::get('/project/{project}/daily-reports', [DailyReportController::class, 'index'])->name('daily-reports.index');
-Route::get('/project/{project}/daily-reports/create', [DailyReportController::class, 'create'])->name('daily-reports.create');
-Route::post('/project/{project}/daily-reports', [DailyReportController::class, 'store'])->name('daily-reports.store');
-Route::get('/project/{project}/daily-reports/workers-count', [DailyReportController::class, 'getWorkersCount'])->name('daily-reports.workers-count');
-Route::get('/project/{project}/daily-reports/{report}', [DailyReportController::class, 'show'])->name('daily-reports.show');
-Route::get('/project/{project}/daily-reports/{report}/detail', [DailyReportController::class, 'showDetail'])->name('daily-reports.show-detail');
-Route::get('/project/{project}/daily-reports/{report}/edit', [DailyReportController::class, 'edit'])->name('daily-reports.edit');
-Route::get('/project/{project}/daily-reports/{report}/download-pdf', [DailyReportController::class, 'downloadPdf'])->name('daily-reports.download-pdf');
-Route::put('/project/{project}/daily-reports/{report}', [DailyReportController::class, 'update'])->name('daily-reports.update');
-Route::delete('/project/{project}/daily-reports/{report}', [DailyReportController::class, 'destroy'])->name('daily-reports.destroy');
+    // Daily Reports
+    Route::get('/project/{project}/daily-reports', [DailyReportController::class, 'index'])->name('daily-reports.index');
+    Route::get('/project/{project}/daily-reports/create', [DailyReportController::class, 'create'])->name('daily-reports.create');
+    Route::post('/project/{project}/daily-reports', [DailyReportController::class, 'store'])->name('daily-reports.store');
+    Route::get('/project/{project}/daily-reports/workers-count', [DailyReportController::class, 'getWorkersCount'])->name('daily-reports.workers-count');
+    // Route::get('/project/{project}/daily-reports/{report}', [DailyReportController::class, 'show'])->name('daily-reports.show');
+    Route::get('/project/{project}/daily-reports/{report}/detail', [DailyReportController::class, 'showDetail'])->name('daily-reports.show-detail');
+    Route::get('/project/{project}/daily-reports/{report}/edit', [DailyReportController::class, 'edit'])->name('daily-reports.edit');
+    Route::get('/project/{project}/daily-reports/{report}/download-pdf', [DailyReportController::class, 'downloadPdf'])->name('daily-reports.download-pdf');
+    Route::put('/project/{project}/daily-reports/{report}', [DailyReportController::class, 'update'])->name('daily-reports.update');
+    Route::delete('/project/{project}/daily-reports/{report}', [DailyReportController::class, 'destroy'])->name('daily-reports.destroy');
 
-// User Management
-Route::group(['middleware' => ['auth', 'role:administrator']], function () {
-    Route::resource('users', UserController::class)->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
-    Route::get('/users/{id}/assign-role', [UserController::class, 'showAssignRoleForm'])->name('users.assign-role-form');
-    Route::put('/users/{id}/assign-role', [UserController::class, 'assignRole'])->name('users.assign-role');
-    Route::delete('/users/{id}/remove-role', [UserController::class, 'removeRole'])->name('users.remove-role');
-});
+    // User Management (Administrators only)
+    Route::group(['middleware' => ['role:administrator']], function () {
+        Route::resource('users', UserController::class)->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
+        // Route::get('/users/{id}/assign-role', [UserController::class, 'showAssignRoleForm'])->name('users.assign-role-form');
+        // Route::put('/users/{id}/assign-role', [UserController::class, 'assignRole'])->name('users.assign-role');
+        // Route::delete('/users/{id}/remove-role', [UserController::class, 'removeRole'])->name('users.remove-role');
+    });
 
-// Protect project value access with project.value middleware
-Route::group(['middleware' => ['auth', 'project.value']], function () {
-    // Add routes that should only be accessible to administrators here
-    // For example, if there are API routes to fetch project values
-});
+}); // End of auth middleware group

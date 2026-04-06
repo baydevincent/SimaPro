@@ -42,12 +42,14 @@
     @endif
     
     <div class="card-body">
-        <table class="table table-bordered">
+        <table class="table table-bordered table-responsive">
             <tr>
-                <th>Project</th>
-                <th>Nilai</th>
-                <th>Progress</th>
-                <th>Aksi</th>
+                <th width="25%">Project</th>
+                <th width="15%">Nilai</th>
+                <th width="10%">Start</th>
+                <th width="10%">Deadline</th>
+                <th width="15%">Progress</th>
+                <th width="15%">Aksi</th>
             </tr>
             @foreach($projects as $p)
             <tr>
@@ -63,6 +65,8 @@
                         <span class="text-muted">***</span>
                     @endauth
                 </td>
+                <td>{{ \Carbon\Carbon::parse($p->tanggal_mulai)->format('d M Y') }}</td>
+                <td>{{ $p->tanggal_selesai ? \Carbon\Carbon::parse($p->tanggal_selesai)->format('d M Y') : '-' }}</td>
                 <td>
                     <div class="progress">
                         <div class="progress-bar bg-success"
@@ -104,39 +108,7 @@
 
 @push('scripts')
 <script>
-$(document).ready(function() {
-    // Handle delete project
-    $('.btn-delete-project').on('click', function() {
-        var button = $(this);
-        var projectId = button.data('id');
-        var url = button.data('url');
-
-        if (confirm('Yakin ingin menghapus project ini?')) {
-            $.ajax({
-                url: url,
-                type: 'POST',
-                data: {
-                    '_method': 'DELETE',
-                    '_token': $('meta[name="csrf-token"]').attr('content')
-                },
-                success: function(response) {
-                    // Tampilkan alert sukses
-                    alert(response.message || 'Project berhasil dihapus');
-
-                    // Refresh halaman untuk menampilkan data terbaru
-                    location.reload();
-                },
-                error: function(xhr, status, error) {
-                    // Tampilkan alert error
-                    alert('Gagal menghapus project: ' + (xhr.responseJSON?.message || 'Terjadi kesalahan'));
-                }
-            });
-        }
-    });
-});
-
 function changeSortOrder(order) {
-    // Redirect ke halaman yang sama dengan parameter order
     window.location.href = '?order=' + order;
 }
 </script>

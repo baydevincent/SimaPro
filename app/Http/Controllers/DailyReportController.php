@@ -14,12 +14,18 @@ class DailyReportController extends Controller
     public function index($projectId)
     {
         $project = Project::findOrFail($projectId);
-        $reports = DailyReport::where('project_id', $projectId)
-            ->with('images')
-            ->orderBy('tanggal', 'desc')
-            ->paginate(10);
+        
+        // Get total workers from attendance on current date
+        $totalWorkers = 0;
+        $attendance = $project->attendances()
+            ->whereDate('tanggal', date('Y-m-d'))
+            ->first();
+        
+        if ($attendance) {
+            $totalWorkers = $attendance->attendanceWorkers()->where('hadir', true)->count();
+        }
 
-        return view('daily-reports.index-tab', compact('project', 'reports'));
+        return view('daily-reports.create', compact('project', 'totalWorkers'));
     }
 
     public function create($projectId)

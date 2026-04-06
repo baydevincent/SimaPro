@@ -52,10 +52,6 @@ class ProjectController extends Controller
     {
         $project->tasks()->delete();
 
-        // if ($project->shopdrawing) {
-        //     \Storage::delete($project->shopdrawing);
-        // }
-
         $project->delete();
 
         return response()->json([

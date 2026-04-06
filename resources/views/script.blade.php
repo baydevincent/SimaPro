@@ -1,6 +1,5 @@
 <!-- <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.20/index.global.min.js"></script> -->
 <script>
-// Wait for jQuery to be available
 function waitForJQuery(callback) {
     if (typeof jQuery !== 'undefined') {
         callback();
@@ -18,18 +17,211 @@ waitForJQuery(function() {
         }
     });
 
+    $(document).ajaxError(function(event, jqxhr, settings, thrownError) {
+        console.log('AJAX Error:', thrownError || jqxhr.status);
+        console.log('Error details:', {
+            status: jqxhr.status,
+            statusText: jqxhr.statusText,
+            url: settings.url,
+            thrownError: thrownError
+        });
+
+        // Handle 101 Switching Protocols / Connection Timeout / Status 0
+        if (jqxhr.status === 101 || jqxhr.status === 0 || thrownError === 'timeout' || thrownError === 'error') {
+            console.warn('Connection lost or timeout. Redirecting to login...');
+
+            // Show notification
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Koneksi Terputus',
+                    text: 'Sesi Anda telah berakhir atau koneksi terputus. Silakan login kembali.',
+                    timer: 2000,
+                    showConfirmButton: false,
+                    allowOutsideClick: false,
+                    allowEscapeKey: false
+                }).then(function() {
+                    window.location.href = '/login';
+                });
+            } else {
+                alert('Koneksi terputus. Silakan login kembali.');
+                window.location.href = '/login';
+            }
+
+            // Fallback redirect if Swal doesn't close
+            setTimeout(function() {
+                window.location.href = '/login';
+            }, 3000);
+        }
+
+        // Handle 304 Not Modified (Cache Hit - Not an error, just log it)
+        if (jqxhr.status === 304) {
+            console.info('304 Not Modified - Using cached response for:', settings.url);
+            // Don't show error to user, this is normal cache behavior
+            return;
+        }
+
+        // Handle 401 Unauthorized (session expired)
+        if (jqxhr.status === 401) {
+            console.warn('Session expired (401). Redirecting to login...');
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Sesi Berakhir',
+                    text: 'Silakan login kembali.',
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(function() {
+                    window.location.href = '/login';
+                });
+            }
+            setTimeout(function() {
+                window.location.href = '/login';
+            }, 2000);
+        }
+
+        // Handle 403 Forbidden
+        if (jqxhr.status === 403) {
+            console.warn('Access forbidden (403). Redirecting...');
+            window.location.href = '/home';
+        }
+
+        // Handle 404 Not Found
+        if (jqxhr.status === 404) {
+            console.error('Resource not found (404):', settings.url);
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Data Tidak Ditemukan',
+                    text: 'Data yang Anda cari tidak tersedia.',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            }
+        }
+
+        // Handle 422 Unprocessable Entity (Validation Error)
+        if (jqxhr.status === 422) {
+            console.warn('Validation error (422):', jqxhr.responseJSON);
+            // Let the form handle validation errors
+            return;
+        }
+
+        // Handle 500 Server Error
+        if (jqxhr.status === 500) {
+            console.error('Server error (500) occurred');
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Server Error',
+                    text: 'Terjadi kesalahan pada server. Silakan coba lagi.',
+                });
+            } else {
+                alert('Terjadi kesalahan pada server. Silakan coba lagi.');
+            }
+        }
+
+        // Handle 502 Bad Gateway / 503 Service Unavailable / 504 Gateway Timeout
+        if ([502, 503, 504].includes(jqxhr.status)) {
+            console.error('Server unavailable:', jqxhr.status);
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Server Tidak Tersedia',
+                    text: 'Server sedang sibuk atau dalam perawatan. Silakan coba beberapa saat lagi.',
+                    timer: 5000,
+                    showConfirmButton: true
+                });
+            } else {
+                alert('Server sedang sibuk. Silakan coba beberapa saat lagi.');
+            }
+        }
+    });
+
+    // Global AJAX Success Handler (for logging)
+    $(document).ajaxSuccess(function(event, jqxhr, settings, response) {
+        // Log 304 responses for debugging
+        if (jqxhr.status === 304) {
+            console.log('✓ Cached response used:', settings.url);
+        }
+    });
+
+    // Global AJAX Complete Handler (cleanup)
+    $(document).ajaxComplete(function(event, jqxhr, settings) {
+        // Can be used for cleanup or logging
+        // console.log('AJAX request completed:', settings.url, 'Status:', jqxhr.status);
+    });
+
+    // Hearthbeat
+    let heartbeatInterval;
+    let idleTime = 0;
+    const MAX_IDLE_TIME = 181; 
+
+    $(document).on('click keypress mousemove scroll', function() {
+        idleTime = 0;
+    });
+
+    // Start heartbeat checker
+    function startHeartbeat() {
+        heartbeatInterval = setInterval(function() {
+            idleTime++;
+
+            // if (idleTime % 10 === 0) {
+            //     console.log('Idle time:', idleTime, 'seconds');
+            // }
+
+            // Check connection after MAX_IDLE_TIME seconds of idle
+            if (idleTime >= MAX_IDLE_TIME) {
+                console.log('Checking connection status... (idle for', idleTime, 'seconds)');
+
+                $.ajax({
+                    url: '/home',
+                    method: 'HEAD',
+                    timeout: 5000,
+                    success: function() {
+                        console.log('Connection OK - Session still active');
+                        idleTime = 0;
+                    },
+                    error: function(jqxhr, status, error) {
+                        console.warn('Connection check failed:', jqxhr.status, status, error);
+                        if (jqxhr.status === 401 || jqxhr.status === 0 || status === 'timeout') {
+                            console.warn('Session expired or connection lost. Redirecting to login...');
+                            
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    icon: 'warning',
+                                    title: 'Sesi Berakhir',
+                                    text: 'Sesi Anda telah berakhir karena tidak ada aktivitas.',
+                                    timer: 5000,
+                                    showConfirmButton: false
+                                }).then(function() {
+                                    window.location.href = '/login';
+                                });
+                            } else {
+                                alert('Sesi Anda telah berakhir. Silakan login kembali.');
+                                window.location.href = '/login';
+                            }
+                        }
+                    }
+                });
+            }
+        }, 1000);
+    }
+
+    $(document).ready(function() {
+        console.log('Heartbeat started - Will check connection after', MAX_IDLE_TIME, 'seconds of idle');
+        startHeartbeat();
+    });
+
     $(document).ready(function() {
         console.log('Tab persistence script loaded');
         
-        // 1. Get active tab from URL hash first, then localStorage
         let activeTab = window.location.hash || localStorage.getItem('activeTab');
         
         if (activeTab) {
-            // Remove # if present
             activeTab = activeTab.replace('#', '');
             console.log('Restoring tab:', activeTab);
             
-            // Find and show the tab
             let tabLink = $('a[href="#' + activeTab + '"][data-toggle="tab"]');
             if (tabLink.length) {
                 console.log('Tab link found:', tabLink);
@@ -502,7 +694,6 @@ $(document).on('click', '.btn-edit-worker', function() {
         }
     });
 
-    // Handle multiple file upload for edit form
     $(document).on('change', '#edit-multiple-image-upload', function() {
         const files = this.files;
         const previewContainer = $('#edit-image-preview-container');
@@ -546,5 +737,56 @@ $(document).on('click', '.btn-edit-worker', function() {
             label.removeClass('selected').text('Pilih foto (bisa multiple)...');
         }
     });
-}); 
+});
+
+$(document).ajaxError(function(event, jqxhr, settings, thrownError) {
+    console.log('AJAX Error:', thrownError || jqxhr.status);
+    
+    // Handle 101 Switching Protocols / Connection Timeout
+    if (jqxhr.status === 101 || jqxhr.status === 0 || thrownError === 'timeout') {
+        console.warn('Connection lost or timeout. Redirecting to login...');
+        
+        // Show notification
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Koneksi Terputus',
+                text: 'Sesi Anda telah berakhir atau koneksi terputus. Silakan login kembali.',
+                timer: 3000,
+                showConfirmButton: false
+            });
+        } else {
+            alert('Koneksi terputus. Silakan login kembali.');
+        }
+        
+        // Redirect to login after delay
+        setTimeout(function() {
+            window.location.href = '{{ route('login') }}';
+        }, 3000);
+    }
+    
+    // Handle 401 Unauthorized (session expired)
+    if (jqxhr.status === 401) {
+        console.warn('Session expired. Redirecting to login...');
+        window.location.href = '{{ route('login') }}';
+    }
+    
+    // Handle 403 Forbidden
+    if (jqxhr.status === 403) {
+        console.warn('Access forbidden. Redirecting...');
+        window.location.href = '{{ route('home') }}';
+    }
+    
+    // Handle 500 Server Error
+    if (jqxhr.status === 500) {
+        console.error('Server error occurred');
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: 'error',
+                title: 'Server Error',
+                text: 'Terjadi kesalahan pada server. Silakan coba lagi.',
+            });
+        }
+    }
+});
 </script>

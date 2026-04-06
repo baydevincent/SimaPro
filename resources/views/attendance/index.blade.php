@@ -52,11 +52,11 @@
                             $tidakHadirCount = $totalWorkers - $hadirCount;
                         @endphp
                         <tr>
-                            <td>{{ \Carbon\Carbon::parse($attendance->tanggal)->format('d M Y') }}</td>
-                            <td>{{ $totalWorkers }}</td>
-                            <td>{{ $hadirCount }}</td>
-                            <td>{{ $tidakHadirCount }}</td>
-                            <td>
+                            <td data-label="Tanggal">{{ \Carbon\Carbon::parse($attendance->tanggal)->format('d M Y') }}</td>
+                            <td data-label="Total Pekerja">{{ $totalWorkers }}</td>
+                            <td data-label="Hadir">{{ $hadirCount }}</td>
+                            <td data-label="Tidak Hadir">{{ $tidakHadirCount }}</td>
+                            <td data-label="Aksi">
                                 <a href="{{ route('attendance.show', ['project' => $project->id, 'attendance' => $attendance->id]) }}"
                                    class="btn btn-info btn-sm">Lihat Detail</a>
                                 <a href="{{ route('attendance.edit', ['project' => $project->id, 'attendance' => $attendance->id]) }}"

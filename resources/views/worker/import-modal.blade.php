@@ -116,215 +116,228 @@
 
 @push('scripts')
 <script>
-// Update file info when file is selected
-document.addEventListener('DOMContentLoaded', function() {
-    const fileInput = document.getElementById('importWorkerFile');
-    const fileInfo = document.getElementById('workerFileInfo');
-    const importPreview = document.getElementById('workerImportPreview');
+// Wait for jQuery to be available
+function waitForJQuery(callback) {
+    if (typeof jQuery !== 'undefined') {
+        callback();
+    } else {
+        setTimeout(function() {
+            waitForJQuery(callback);
+        }, 50);
+    }
+}
 
-    if (fileInput) {
-        fileInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
+waitForJQuery(function() {
+    // Update file info when file is selected
+    document.addEventListener('DOMContentLoaded', function() {
+        const fileInput = document.getElementById('importWorkerFile');
+        const fileInfo = document.getElementById('workerFileInfo');
+        const importPreview = document.getElementById('workerImportPreview');
 
-            if (file) {
-                const fileSize = (file.size / 1024 / 1024).toFixed(2);
-                const fileType = file.name.split('.').pop().toUpperCase();
+        if (fileInput) {
+            fileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
 
-                fileInfo.innerHTML =
-                    `<div class="alert alert-success py-2 px-3 mb-0">
-                        <i class="fas fa-check-circle mr-2"></i>
-                        <strong>${file.name}</strong>
-                        <span class="text-muted">(${fileSize} MB - ${fileType})</span>
-                    </div>`;
+                if (file) {
+                    const fileSize = (file.size / 1024 / 1024).toFixed(2);
+                    const fileType = file.name.split('.').pop().toUpperCase();
 
-                // Check file size
-                if (file.size > 10 * 1024 * 1024) {
                     fileInfo.innerHTML =
-                        `<div class="alert alert-danger py-2 px-3 mb-0">
-                            <i class="fas fa-exclamation-triangle mr-2"></i>
-                            Ukuran file terlalu besar! Maksimal 10MB.
+                        `<div class="alert alert-success py-2 px-3 mb-0">
+                            <i class="fas fa-check-circle mr-2"></i>
+                            <strong>${file.name}</strong>
+                            <span class="text-muted">(${fileSize} MB - ${fileType})</span>
                         </div>`;
-                    this.value = '';
+
+                    // Check file size
+                    if (file.size > 10 * 1024 * 1024) {
+                        fileInfo.innerHTML =
+                            `<div class="alert alert-danger py-2 px-3 mb-0">
+                                <i class="fas fa-exclamation-triangle mr-2"></i>
+                                Ukuran file terlalu besar! Maksimal 10MB.
+                            </div>`;
+                        this.value = '';
+                        if (importPreview) importPreview.style.display = 'none';
+                        return;
+                    }
+
+                    // Show preview
+                    if (importPreview) {
+                        importPreview.style.display = 'block';
+                        importPreview.innerHTML = `
+                            <div class="alert alert-primary mb-0">
+                                <i class="fas fa-info-circle mr-2"></i>
+                                <strong>File siap diimport!</strong> Klik tombol "Import Workers" untuk melanjutkan.
+                            </div>
+                        `;
+                    }
+                } else {
+                    fileInfo.innerHTML = '';
                     if (importPreview) importPreview.style.display = 'none';
+                }
+            });
+        }
+    });
+
+    // Handle form submission
+    document.addEventListener('DOMContentLoaded', function() {
+        const importForm = document.getElementById('importWorkerForm');
+        const submitBtn = document.getElementById('btnImportWorker');
+        const fileInput = document.getElementById('importWorkerFile');
+
+        if (importForm) {
+            importForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                // Validate file is selected
+                if (!fileInput.files || !fileInput.files[0]) {
+                    alert('Silakan pilih file Excel terlebih dahulu');
                     return;
                 }
 
-                // Show preview
-                if (importPreview) {
-                    importPreview.style.display = 'block';
-                    importPreview.innerHTML = `
-                        <div class="alert alert-primary mb-0">
-                            <i class="fas fa-info-circle mr-2"></i>
-                            <strong>File siap diimport!</strong> Klik tombol "Import Workers" untuk melanjutkan.
-                        </div>
-                    `;
-                }
-            } else {
-                fileInfo.innerHTML = '';
-                if (importPreview) importPreview.style.display = 'none';
-            }
-        });
-    }
-});
+                const file = fileInput.files[0];
+                const originalText = submitBtn.innerHTML;
 
-// Handle form submission
-document.addEventListener('DOMContentLoaded', function() {
-    const importForm = document.getElementById('importWorkerForm');
-    const submitBtn = document.getElementById('btnImportWorker');
-    const fileInput = document.getElementById('importWorkerFile');
+                // Disable button
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Mengimport...';
+                submitBtn.disabled = true;
 
-    if (importForm) {
-        importForm.addEventListener('submit', function(e) {
-            e.preventDefault();
+                const formData = new FormData(this);
+                const uploadUrl = "{{ route('project.workers.import', ['project' => $project->id]) }}";
 
-            // Validate file is selected
-            if (!fileInput.files || !fileInput.files[0]) {
-                alert('Silakan pilih file Excel terlebih dahulu');
-                return;
-            }
+                const xhr = new XMLHttpRequest();
 
-            const file = fileInput.files[0];
-            const originalText = submitBtn.innerHTML;
+                xhr.open('POST', uploadUrl, true);
+                xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+                xhr.setRequestHeader('X-CSRF-TOKEN', document.querySelector('meta[name="csrf-token"]')?.content || '');
 
-            // Disable button
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Mengimport...';
-            submitBtn.disabled = true;
+                xhr.onload = function() {
+                    if (xhr.status === 200) {
+                        try {
+                            const data = JSON.parse(xhr.responseText);
 
-            const formData = new FormData(this);
-            const uploadUrl = "{{ route('project.workers.import', ['project' => $project->id]) }}";
-
-            const xhr = new XMLHttpRequest();
-
-            xhr.open('POST', uploadUrl, true);
-            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-            xhr.setRequestHeader('X-CSRF-TOKEN', document.querySelector('meta[name="csrf-token"]')?.content || '');
-
-            xhr.onload = function() {
-                if (xhr.status === 200) {
-                    try {
-                        const data = JSON.parse(xhr.responseText);
-
-                        if (data.success) {
-                            showWorkerImportResult(data);
-                        } else {
-                            let errorMsg = data.message || 'Import gagal';
-                            if (data.errors && data.errors.length > 0) {
-                                errorMsg += '<br><br>Error:<br>';
-                                data.errors.forEach(err => {
-                                    errorMsg += `- Row ${err.row}: ${err.error}<br>`;
-                                });
+                            if (data.success) {
+                                showWorkerImportResult(data);
+                            } else {
+                                let errorMsg = data.message || 'Import gagal';
+                                if (data.errors && data.errors.length > 0) {
+                                    errorMsg += '<br><br>Error:<br>';
+                                    data.errors.forEach(err => {
+                                        errorMsg += `- Row ${err.row}: ${err.error}<br>`;
+                                    });
+                                }
+                                alert(errorMsg);
+                                submitBtn.innerHTML = originalText;
+                                submitBtn.disabled = false;
                             }
-                            alert(errorMsg);
+                        } catch (e) {
+                            alert('Response tidak valid: ' + xhr.responseText);
                             submitBtn.innerHTML = originalText;
                             submitBtn.disabled = false;
                         }
-                    } catch (e) {
-                        alert('Response tidak valid: ' + xhr.responseText);
+                    } else {
+                        alert('Error ' + xhr.status + ': ' + xhr.statusText);
                         submitBtn.innerHTML = originalText;
                         submitBtn.disabled = false;
                     }
-                } else {
-                    alert('Error ' + xhr.status + ': ' + xhr.statusText);
+                };
+
+                xhr.onerror = function() {
+                    alert('Terjadi kesalahan saat upload. Periksa koneksi Anda.');
                     submitBtn.innerHTML = originalText;
                     submitBtn.disabled = false;
-                }
-            };
+                };
 
-            xhr.onerror = function() {
-                alert('Terjadi kesalahan saat upload. Periksa koneksi Anda.');
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
-            };
+                xhr.send(formData);
+            });
+        }
+    });
 
-            xhr.send(formData);
-        });
-    }
-});
+    // Show import result
+    function showWorkerImportResult(data) {
+        const content = document.getElementById('workerImportResultContent');
 
-// Show import result
-function showWorkerImportResult(data) {
-    const content = document.getElementById('workerImportResultContent');
+        let html = `
+            <div class="text-center mb-4">
+                <i class="fas fa-check-circle text-success" style="font-size: 4rem;"></i>
+                <h4 class="mt-3">Import Worker Berhasil!</h4>
+            </div>
 
-    let html = `
-        <div class="text-center mb-4">
-            <i class="fas fa-check-circle text-success" style="font-size: 4rem;"></i>
-            <h4 class="mt-3">Import Worker Berhasil!</h4>
-        </div>
-
-        <div class="row">
-            <div class="col-md-6">
-                <div class="card bg-success text-white">
-                    <div class="card-body text-center">
-                        <h3>${data.imported}</h3>
-                        <p class="mb-0">Worker Ditambahkan</p>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card bg-success text-white">
+                        <div class="card-body text-center">
+                            <h3>${data.imported}</h3>
+                            <p class="mb-0">Worker Ditambahkan</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card bg-warning text-dark">
+                        <div class="card-body text-center">
+                            <h3>${data.skipped}</h3>
+                            <p class="mb-0">Worker Di-skip (Duplikat)</p>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-6">
-                <div class="card bg-warning text-dark">
-                    <div class="card-body text-center">
-                        <h3>${data.skipped}</h3>
-                        <p class="mb-0">Worker Di-skip (Duplikat)</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-
-    if (data.errors && data.errors.length > 0) {
-        html += `
-            <div class="mt-4">
-                <h6 class="font-weight-bold">Worker yang Di-skip:</h6>
-                <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
-                    <table class="table table-sm table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Row</th>
-                                <th>Nama Worker</th>
-                                <th>Error</th>
-                            </tr>
-                        </thead>
-                        <tbody>
         `;
 
-        data.errors.forEach(error => {
+        if (data.errors && data.errors.length > 0) {
             html += `
-                <tr>
-                    <td>${error.row}</td>
-                    <td>${error.nama_worker || '-'}</td>
-                    <td><span class="text-danger">${error.error}</span></td>
-                </tr>
+                <div class="mt-4">
+                    <h6 class="font-weight-bold">Worker yang Di-skip:</h6>
+                    <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                        <table class="table table-sm table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Row</th>
+                                    <th>Nama Worker</th>
+                                    <th>Error</th>
+                                </tr>
+                            </thead>
+                            <tbody>
             `;
-        });
 
-        html += `
-                        </tbody>
-                    </table>
+            data.errors.forEach(error => {
+                html += `
+                    <tr>
+                        <td>${error.row}</td>
+                        <td>${error.nama_worker || '-'}</td>
+                        <td><span class="text-danger">${error.error}</span></td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </div>
-        `;
+            `;
+        }
+
+        content.innerHTML = html;
+
+        // Close import modal and open result modal
+        $('#importWorkerModal').modal('hide');
+        $('#workerImportResultModal').modal('show');
+
+        // Reset form
+        document.getElementById('importWorkerForm').reset();
+        document.getElementById('workerFileInfo').innerHTML = '';
+        document.getElementById('workerImportPreview').style.display = 'none';
     }
 
-    content.innerHTML = html;
-
-    // Close import modal and open result modal
-    $('#importWorkerModal').modal('hide');
-    $('#workerImportResultModal').modal('show');
-
-    // Reset form
-    document.getElementById('importWorkerForm').reset();
-    document.getElementById('workerFileInfo').innerHTML = '';
-    document.getElementById('workerImportPreview').style.display = 'none';
-}
-
-// Reset modal when closed
-$('#importWorkerModal').on('hidden.bs.modal', function() {
-    document.getElementById('importWorkerForm').reset();
-    document.getElementById('workerFileInfo').innerHTML = '';
-    document.getElementById('workerImportPreview').style.display = 'none';
-    const submitBtn = document.getElementById('btnImportWorker');
-    submitBtn.innerHTML = '<i class="fas fa-upload mr-2"></i>Import Workers';
-    submitBtn.disabled = false;
+    // Reset modal when closed
+    $('#importWorkerModal').on('hidden.bs.modal', function() {
+        document.getElementById('importWorkerForm').reset();
+        document.getElementById('workerFileInfo').innerHTML = '';
+        document.getElementById('workerImportPreview').style.display = 'none';
+        const submitBtn = document.getElementById('btnImportWorker');
+        submitBtn.innerHTML = '<i class="fas fa-upload mr-2"></i>Import Workers';
+        submitBtn.disabled = false;
+    });
 });
 </script>
 @endpush
